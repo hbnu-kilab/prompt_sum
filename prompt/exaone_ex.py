@@ -15,7 +15,7 @@ model = AutoModelForCausalLM.from_pretrained(
 )
 tokenizer = AutoTokenizer.from_pretrained("LGAI-EXAONE/EXAONE-3.0-7.8B-Instruct")
 
-data_loader = DataLoader(JsonLoader)
+data_loader = DataLoader(JsonLoader, "json")
 root_dir = "/kilab/data/"
 modu_dir = "modu/NIKL_SBSC_2023_v1.0"
 data_dir_list = data_loader.get_listdir(root_dir, modu_dir)
