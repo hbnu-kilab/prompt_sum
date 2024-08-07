@@ -20,7 +20,7 @@ class DataLoader(DataLoaderInterface):
     def load(self, file_path, **kwargs):
         return self.file_system.load(file_path, **kwargs)
 
-    def get_listdir(root_dir, data_dir):
+    def get_listdir(self, root_dir, data_dir):
         data_dir = Path(root_dir) / data_dir
         return os.listdir(data_dir)
 
@@ -39,7 +39,20 @@ class JsonLoader(DataLoaderInterface):
         if self.file_ext == "jsonl":
             return self.load_jsonl(file_path)
         elif self.file_ext == "json":
-            yield self.load_json(file_path)
+            if type(file_path) == list:
+                yield self.load_json_in_dir(file_path)
+            else:
+                return self.load_json(file_path)
+
+    def load_json_in_dir(self, file_path_lst):
+        for file_path in file_path_lst:
+            with open(file_path, 'r') as file:
+                try:
+                    qa_lst = json.load(file)
+                except:
+                    lines = file.read()
+                    qa_lst = json.loads(lines)
+                yield qa_lst
 
     def load_json(self, file_path):
         with open(file_path, 'r') as file:
@@ -49,7 +62,7 @@ class JsonLoader(DataLoaderInterface):
                 lines = file.read()
                 qa_lst = json.loads(lines)
 
-        yield qa_lst
+        return qa_lst
 
     def load_jsonl(self, file_path):
         qa_lst = []
