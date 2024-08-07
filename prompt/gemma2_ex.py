@@ -9,9 +9,7 @@ root_dir = "/kilab/data/"
 modu_dir = "modu/NIKL_SBSC_2023_v1.0"
 data_dir_list = data_loader.get_listdir(root_dir, modu_dir)
 
-json_lst = []
-for data_dir in data_dir_list:
-    json_lst += [data_loader.load(data_dir)]
+json_lst = data_loader.load(data_dir_list)
 
 
 model_id = "rtzr/ko-gemma-2-9b-it"
