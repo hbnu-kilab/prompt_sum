@@ -1,6 +1,18 @@
 import transformers
 import torch
 
+from loader import DataLoader, JsonLoader
+
+
+data_loader = DataLoader(JsonLoader)
+root_dir = "/kilab/data/"
+modu_dir = "modu/NIKL_SBSC_2023_v1.0"
+data_dir_list = data_loader.get_listdir(root_dir, modu_dir)
+
+json_lst = []
+for data_dir in data_dir_list:
+    json_lst += [data_loader.load(data_dir)]
+
 
 model_id = "rtzr/ko-gemma-2-9b-it"
 
@@ -10,6 +22,7 @@ pipeline = transformers.pipeline(
     model_kwargs={"torch_dtype": torch.bfloat16},
     device_map="auto",
 )
+
 
 pipeline.model.eval()
 instruction = "서울의 유명한 관광 코스를 만들어줄래?"

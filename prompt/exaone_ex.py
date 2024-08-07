@@ -1,18 +1,19 @@
 import os
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from ..loader import DataLoader, JsonLoader
+from huggingface import login
+from loader import DataLoader, JsonLoader
 
 ACCESS_TOKEN = os.environ.get("HFTOKEN")
+login(token=ACCESS_TOKEN)
 
 model = AutoModelForCausalLM.from_pretrained(
     "LGAI-EXAONE/EXAONE-3.0-7.8B-Instruct",
     torch_dtype=torch.bfloat16,
     trust_remote_code=True,
     device_map="auto",
-    use_auth_token=ACCESS_TOKEN
 )
-tokenizer = AutoTokenizer.from_pretrained("LGAI-EXAONE/EXAONE-3.0-7.8B-Instruct", use_auth_token=ACCESS_TOKEN)
+tokenizer = AutoTokenizer.from_pretrained("LGAI-EXAONE/EXAONE-3.0-7.8B-Instruct")
 
 data_loader = DataLoader(JsonLoader)
 root_dir = "/kilab/data/"
