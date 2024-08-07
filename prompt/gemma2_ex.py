@@ -9,8 +9,18 @@ root_dir = "/kilab/data/"
 modu_dir = "modu/NIKL_SBSC_2023_v1.0"
 data_dir_list = data_loader.get_listdir(root_dir, modu_dir)
 
-json_lst = data_loader.load(data_dir_list)
+json_lst = list(data_loader.load(data_dir_list))
 
+src_lst, sum_lst = [], []
+
+for json_doc in json_lst:
+    for doc in json_doc['document']:
+        src = ''
+        for sent in doc['sentence']:
+            src += sent['form']
+        
+        src_lst.append(src)
+        sum_lst.append(doc['SC']['main_summary'])
 
 model_id = "rtzr/ko-gemma-2-9b-it"
 
