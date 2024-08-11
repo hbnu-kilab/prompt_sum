@@ -8,8 +8,8 @@ class Promptor(PromptorInterface):
                  file_system: PromptorInterface):
         self.file_system = file_system
     
-    def do_llm(self, instruction, **kwargs):
-        return self.file_system.do_llm(instruction, **kwargs)
+    def do_llm(self, instruction):
+        return self.file_system.do_llm(instruction)
 
 class Gemma2Promptor(PromptorInterface):
     def __init__(self):
@@ -23,8 +23,7 @@ class Gemma2Promptor(PromptorInterface):
 
         self.pipeline.model.eval()
 
-    
-    def do_llm(self, instruction, **kwargs):
+    def do_llm(self, instruction):
         messages = [
             {"role": "user", "content": f"{instruction}"}
         ]

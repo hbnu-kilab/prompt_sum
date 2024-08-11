@@ -27,7 +27,7 @@ elif data_type == "news":
     json_obj = data_loader.load(Path(ROOT_DIR) / data_dir)
     src_lst, sum_lst = sum_loader.load(json_obj)
 
-prompt = Promptor(Gemma2Promptor)
+promptor = Promptor(Gemma2Promptor)
 
 # model_id = "rtzr/ko-gemma-2-9b-it"
 # pipeline = transformers.pipeline(
@@ -71,7 +71,7 @@ output_sum_lst = []
 for i, (src, sum) in enumerate(zip(src_lst, sum_lst)):
     prev_gold_sum = sum_lst[i-1]
     instruction = mk_inst_for_summary(src, prev_gold_sum)
-    outputs, output_sum = prompt.do_llm(instruction)
+    outputs, output_sum = promptor.do_llm(instruction)
     output_sum_lst.append(output_sum)
 
     output_sum = output_sum.split("[예제 요약]")[0].replace('\n', ' ')
