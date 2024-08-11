@@ -72,6 +72,8 @@ def do_llm(instruction):
 
 output_sum_lst = []
 for src, sum in zip(src_lst, sum_lst):
+    instruction = f"너는 정말 똑똑한 친구이고 요약을 정말 잘 해. 전체 맥락에서 주요한 내용만 잘 찾아서 요약하는 걸 좋아하지. 다음 주어진 글에 대해서 요약해줘. 입력 문단 앞에 [원문]이 주어지고 [요약] 뒤에 너가 요약문을 작성하면 돼. 항상 이 포맷을 잘 지켜주고. [원문] {src} [요약]"
+
     outputs, output_sum = do_llm(src)
     output_sum_lst.append(output_sum)
 
