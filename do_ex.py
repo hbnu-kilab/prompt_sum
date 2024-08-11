@@ -1,6 +1,7 @@
+from tqdm import tqdm
 from pathlib import Path
 from loader import DataLoader, JsonLoader, JsonInDirLoader, SummaryLoader, SummarySBSCLoader, SummarySDSCLoader, SummaryAIHubNewsLoader
-from promptor import Promptor, Gemma2Promptor
+from promptor import Promptor, ExaonePromptor, Gemma2Promptor
 from promptor.mk_instruction import mk_inst_for_summary
 
 from eval import eval
@@ -8,6 +9,7 @@ from eval import eval
 ROOT_DIR = "/kilab/data/"
 
 data_type = "news"
+model_type = "exaone"
 
 if data_type == "SBSC":
     # SBSC data
@@ -25,14 +27,17 @@ elif data_type == "news":
     json_obj = data_loader.load(Path(ROOT_DIR) / data_dir)
     src_lst, sum_lst = sum_loader.load(json_obj)
 
-promptor = Promptor(Gemma2Promptor)
+if model_type == "gemma2":
+    promptor = Promptor(Gemma2Promptor)
+elif model_type == "exaone":
+    promptor = Promptor(ExaonePromptor)
 
 output_sum_lst = []
-for i, (src, sum) in enumerate(zip(src_lst, sum_lst)):
+for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=len(src_lst)):
     prev_gold_sum = sum_lst[i-1]
     instruction = mk_inst_for_summary(src, prev_gold_sum)
-    outputs, output_sum = promptor.do_llm(instruction)
-    output_sum_lst.append(output_sum)
+    output = promptor.do_llm(instruction)
+    output_sum_lst.append(output)
 
     output_sum = output_sum.split("[예제 요약]")[0].replace('\n', ' ')
     rouge_scores, rouge = eval.rouge(output_sum, sum)
