@@ -78,6 +78,6 @@ for i, (src, sum) in enumerate(zip(src_lst, sum_lst)):
     outputs, output_sum = do_llm(instruction)
     output_sum_lst.append(output_sum)
 
-    rouge = eval.rouge(output_sum, sum)
+    rouge_scores, rouge = eval.rouge(output_sum, sum)
     print(output_sum)
 
