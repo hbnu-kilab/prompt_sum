@@ -116,6 +116,4 @@ class ChatGPTPromptor(PromptorInterface):
             messages=messages,
         )
 
-        outputs = completion.choices[0].message.content
-                
-        return self.tokenizer.decode(outputs)
+        return completion.choices[0].message.content
