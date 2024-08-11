@@ -1,5 +1,6 @@
 import transformers
 import torch
+from pathlib import Path
 from tqdm import tqdm
 from loader import DataLoader, JsonLoader, JsonInDirLoader, SummaryLoader, SummarySBSCLoader, SummarySDSCLoader, SummaryAIHubNewsLoader
 
@@ -21,11 +22,10 @@ if data_type == "SBSC":
     src_lst, sum_lst = sum_loader.load(json_lst)
 elif data_type == "news":
     # News data
-    data_dir = "aihub/news/news_valid_original"
+    data_dir = "aihub/news/news_valid_original.json"
     data_loader = DataLoader(JsonLoader, "json")
     sum_loader = SummaryLoader(SummaryAIHubNewsLoader)
-    data_dir_list = data_loader.get_listdir(ROOT_DIR, data_dir)
-    json_obj = data_loader.load(data_dir_list)
+    json_obj = data_loader.load(Path(ROOT_DIR) / data_dir)
     src_lst, sum_lst = sum_loader.load(json_obj)
 
 
