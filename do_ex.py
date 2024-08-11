@@ -44,5 +44,8 @@ for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=len(src_lst)):
     bleu_scores = eval.bleu(output_sum, sum)
     print(f"Rouge scores:\n {rouge_scores}\nRouge: {rouge}")
     print(f"BLEU scores:\n {bleu_scores}")
-    print(output_sum)
+    
+    print(f"Input text: {instruction}")
+    print(f"Output summary: {output_sum}")
+    print(f"Gold Output summary: {sum}")
 
