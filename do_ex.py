@@ -2,7 +2,7 @@ from tqdm import tqdm
 from pathlib import Path
 from loader import DataLoader, JsonLoader, JsonInDirLoader, SummaryLoader, SummarySBSCLoader, SummarySDSCLoader, SummaryAIHubNewsLoader
 from promptor import Promptor, ExaonePromptor, Gemma2Promptor
-from promptor.mk_instruction import mk_inst_for_summary
+from promptor.mk_instruction import mk_inst_for_summary, mk_inst_for_summary_w_1shot
 
 from eval import eval
 
@@ -10,6 +10,7 @@ ROOT_DIR = "/kilab/data/"
 
 data_type = "news"
 model_type = "exaone"
+nshot = 0
 
 if data_type == "SBSC":
     # SBSC data
@@ -35,7 +36,10 @@ elif model_type == "exaone":
 output_sum_lst = []
 for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=len(src_lst)):
     prev_gold_sum = sum_lst[i-1]
-    instruction = mk_inst_for_summary(src, prev_gold_sum)
+    if nshot == 0:
+        instruction = mk_inst_for_summary(src)
+    elif nshot == 1:
+        instruction = mk_inst_for_summary_w_1shot(src, prev_gold_sum)
     output = promptor.do_llm(instruction)
     output_sum_lst.append(output)
 
