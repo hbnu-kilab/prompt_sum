@@ -3,7 +3,7 @@ import torch
 from pathlib import Path
 from tqdm import tqdm
 from loader import DataLoader, JsonLoader, JsonInDirLoader, SummaryLoader, SummarySBSCLoader, SummarySDSCLoader, SummaryAIHubNewsLoader
-from . import PromptInterface, PromptGemma2
+from prompt import PromptInterface, PromptGemma2
 
 from eval import eval
 from mk_instruction import *
