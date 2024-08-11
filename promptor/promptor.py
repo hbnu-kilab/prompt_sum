@@ -1,7 +1,7 @@
 import torch
 import transformers
 from tqdm import tqdm
-from .promptor_interface import PromptorInterface
+from promptor_interface import PromptorInterface
 
 class Promptor(PromptorInterface):
     def __init__(self, 
@@ -24,7 +24,7 @@ class Gemma2Promptor(PromptorInterface):
         self.pipeline.model.eval()
 
     
-    def do_llm(self, instruction):
+    def do_llm(self, instruction, **kwargs):
         messages = [
             {"role": "user", "content": f"{instruction}"}
         ]
