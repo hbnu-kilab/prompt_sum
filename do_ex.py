@@ -4,7 +4,8 @@ from loader import DataLoader, JsonLoader, JsonInDirLoader, SummaryLoader, Summa
 from promptor import Promptor, ExaonePromptor, Gemma2Promptor
 from promptor.mk_instruction import mk_inst_for_summary, mk_inst_for_summary_w_1shot
 
-from eval import eval, postprocess_text, clean_data_ko
+from eval import eval
+from eval.clean_text import postprocess_text, clean_data_ko
 import evaluate
 
 metric = evaluate.combine(["bleu", "rouge", "meteor"])
