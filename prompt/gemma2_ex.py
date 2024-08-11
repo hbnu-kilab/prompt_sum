@@ -22,7 +22,7 @@ if data_type == "SBSC":
     src_lst, sum_lst = sum_loader.load(json_lst)
 elif data_type == "news":
     # News data
-    data_dir = "aihub/news/news_valid_original.json"
+    data_dir = "aihub/summarization/news/news_valid_original.json"
     data_loader = DataLoader(JsonLoader, "json")
     sum_loader = SummaryLoader(SummaryAIHubNewsLoader)
     json_obj = data_loader.load(Path(ROOT_DIR) / data_dir)
