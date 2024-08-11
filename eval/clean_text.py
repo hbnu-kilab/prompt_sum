@@ -19,3 +19,17 @@ def clean_data(text):
     text = text.replace('{ nonvocalsound } ', '')
     text = text.replace('{ gap } ', '')
     return text
+
+def clean_data_ko(text):
+    text = text.replace("[|endofturn|]", '')
+    return text
+
+def postprocess_text(pred, label):
+    return pred.strip(), label.strip()
+
+
+def postprocess_text_batch(preds, labels):
+    preds = [pred.strip() for pred in preds]
+    labels = [[label.strip()] for label in labels]
+
+    return preds, labels

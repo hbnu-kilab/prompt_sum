@@ -4,10 +4,10 @@ from loader import DataLoader, JsonLoader, JsonInDirLoader, SummaryLoader, Summa
 from promptor import Promptor, ExaonePromptor, Gemma2Promptor
 from promptor.mk_instruction import mk_inst_for_summary, mk_inst_for_summary_w_1shot
 
-from eval import eval
+from eval import eval, postprocess_text, clean_data_ko
 import evaluate
 
-metric = evaluate.combine(["bleu", "rouge"])
+metric = evaluate.combine(["bleu", "rouge", "meteor"])
 
 ROOT_DIR = "/kilab/data/"
 
@@ -53,8 +53,8 @@ for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=len(src_lst)):
     elif nshot == 1:
         output_sum = output_sum.split("[예제 요약]")[-1].replace('\n', ' ')
 
-    output_sum = output_sum.replace("[|endofturn|]", '')
-    output_sum = output_sum.strip()
+    output_sym = clean_data_ko(output_sum)
+    output_sum, sum = postprocess_text(output_sum, sum)
 
     metric.add_batch(predictions=[output_sum], references=[sum])
     eval_metric = metric.compute()
@@ -64,12 +64,13 @@ for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=len(src_lst)):
         "eval_rouge2": eval_metric["rouge2"]*100,
         "eval_rougeL": eval_metric["rougeL"]*100,
         "eval_rougeLsum": eval_metric["rougeLsum"]*100,
+        "meteor": eval_metric["meteor"]*100,
     })
 
-    rouge_scores, rouge = eval.rouge(output_sum, sum)
-    bleu_scores = eval.bleu(output_sum, sum)
-    print(f"Rouge scores:\n {rouge_scores}\nRouge: {rouge}")
-    print(f"BLEU scores:\n {bleu_scores}")
+    # rouge_scores, rouge = eval.rouge(output_sum, sum)
+    # bleu_scores = eval.bleu(output_sum, sum)
+    # print(f"Rouge scores:\n {rouge_scores}\nRouge: {rouge}")
+    # print(f"BLEU scores:\n {bleu_scores}")
     
     print(f"Input text: {instruction}")
     print(f"Output summary: {output_sum}")
