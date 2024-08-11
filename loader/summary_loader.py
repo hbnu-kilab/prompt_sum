@@ -31,7 +31,7 @@ class SummaryAIHubNewsLoader(DataLoaderInterface):
             
             src = ' '.join(src)
             ex_sum = doc["extractive"]
-            sum = doc["abstractive"]
+            sum = ' '.join(doc["abstractive"])
             
             src_lst.append(src)
             sum_lst.append(sum)

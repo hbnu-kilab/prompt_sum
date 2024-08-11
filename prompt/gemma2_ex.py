@@ -3,6 +3,7 @@ import torch
 from pathlib import Path
 from tqdm import tqdm
 from loader import DataLoader, JsonLoader, JsonInDirLoader, SummaryLoader, SummarySBSCLoader, SummarySDSCLoader, SummaryAIHubNewsLoader
+from . import PromptInterface, PromptGemma2
 
 from eval import eval
 from mk_instruction import *
@@ -28,50 +29,51 @@ elif data_type == "news":
     json_obj = data_loader.load(Path(ROOT_DIR) / data_dir)
     src_lst, sum_lst = sum_loader.load(json_obj)
 
+prompt = PromptInterface(PromptGemma2)
 
-model_id = "rtzr/ko-gemma-2-9b-it"
-pipeline = transformers.pipeline(
-    "text-generation",
-    model=model_id,
-    model_kwargs={"torch_dtype": torch.bfloat16},
-    device_map="auto",
-)
+# model_id = "rtzr/ko-gemma-2-9b-it"
+# pipeline = transformers.pipeline(
+#     "text-generation",
+#     model=model_id,
+#     model_kwargs={"torch_dtype": torch.bfloat16},
+#     device_map="auto",
+# )
 
-pipeline.model.eval()
+# pipeline.model.eval()
 
 
-def do_llm(instruction):
-    messages = [
-        {"role": "user", "content": f"{instruction}"}
-    ]
+# def do_llm(instruction):
+#     messages = [
+#         {"role": "user", "content": f"{instruction}"}
+#     ]
 
-    prompt = pipeline.tokenizer.apply_chat_template(
-        messages, 
-        tokenize=False, 
-        add_generation_prompt=True
-    )
+#     prompt = pipeline.tokenizer.apply_chat_template(
+#         messages, 
+#         tokenize=False, 
+#         add_generation_prompt=True
+#     )
 
-    terminators = [
-        pipeline.tokenizer.eos_token_id,
-        pipeline.tokenizer.convert_tokens_to_ids("<end_of_turn>")
-    ]
+#     terminators = [
+#         pipeline.tokenizer.eos_token_id,
+#         pipeline.tokenizer.convert_tokens_to_ids("<end_of_turn>")
+#     ]
 
-    outputs = pipeline(
-        prompt,
-        max_new_tokens=2048,
-        eos_token_id=terminators,
-        do_sample=True,
-        temperature=0.6,
-        top_p=0.9,
-    )
+#     outputs = pipeline(
+#         prompt,
+#         max_new_tokens=2048,
+#         eos_token_id=terminators,
+#         do_sample=True,
+#         temperature=0.6,
+#         top_p=0.9,
+#     )
 
-    return outputs, outputs[0]["generated_text"][len(prompt):]
+#     return outputs, outputs[0]["generated_text"][len(prompt):]
 
 output_sum_lst = []
 for i, (src, sum) in enumerate(zip(src_lst, sum_lst)):
     prev_gold_sum = sum_lst[i-1]
     instruction = mk_inst_for_summary(src, prev_gold_sum)
-    outputs, output_sum = do_llm(instruction)
+    outputs, output_sum = prompt.do_llm(instruction)
     output_sum_lst.append(output_sum)
 
     output_sum = output_sum.split("[예제 요약]")[0].replace('\n', ' ')
