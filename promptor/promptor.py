@@ -1,12 +1,12 @@
 import torch
 import transformers
 from tqdm import tqdm
-from promptor_interface import PromptorInterface
+from .promptor_interface import PromptorInterface
 
 class Promptor(PromptorInterface):
     def __init__(self, 
                  file_system: PromptorInterface):
-        self.file_system = file_system
+        self.file_system = file_system()
     
     def do_llm(self, instruction):
         return self.file_system.do_llm(instruction)
