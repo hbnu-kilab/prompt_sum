@@ -7,6 +7,8 @@ from promptor.mk_instruction import mk_inst_for_summary, mk_inst_for_summary_w_1
 from eval import eval
 import evaluate
 
+metric = evaluate.combine(["bleu", "rouge"])
+
 ROOT_DIR = "/kilab/data/"
 
 data_type = "news"
@@ -35,7 +37,6 @@ elif model_type == "exaone":
     promptor = Promptor(ExaonePromptor)
 
 
-metric = evaluate.combine(["bleu", "rouge"])
 output_sum_lst = []
 for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=len(src_lst)):
     prev_gold_sum = sum_lst[i-1]
@@ -63,9 +64,8 @@ for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=len(src_lst)):
         "eval_rouge2": eval_metric["rouge2"]*100,
         "eval_rougeL": eval_metric["rougeL"]*100,
         "eval_rougeLsum": eval_metric["rougeLsum"]*100,
-
     })
-    
+
     rouge_scores, rouge = eval.rouge(output_sum, sum)
     bleu_scores = eval.bleu(output_sum, sum)
     print(f"Rouge scores:\n {rouge_scores}\nRouge: {rouge}")
@@ -73,5 +73,6 @@ for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=len(src_lst)):
     
     print(f"Input text: {instruction}")
     print(f"Output summary: {output_sum}")
-    print(f"Gold Output summary: {sum}")
+    print(f"Gold Output summary: {sum}\n\n\n")
 
+metric.add_batch(predictions=output_sum_lst, references=sum_lst)
