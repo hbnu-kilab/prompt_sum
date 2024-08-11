@@ -2,7 +2,7 @@ import os
 import torch
 import transformers
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from huggingface import login
+from huggingface_hub import login
 
 from .promptor_interface import PromptorInterface
 
