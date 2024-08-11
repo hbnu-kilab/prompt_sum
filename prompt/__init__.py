@@ -1,2 +1,2 @@
 from .prompt_interface import PromptInterface
-from .prompt import PromptGemma2
+from .prompt import Prompt, PromptGemma2
