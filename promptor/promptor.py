@@ -3,6 +3,8 @@ import torch
 import transformers
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from huggingface_hub import login
+import openai
+from openai import OpenAI
 
 from .promptor_interface import PromptorInterface
 
@@ -89,3 +91,32 @@ class Gemma2Promptor(PromptorInterface):
         )
 
         return outputs[0]["generated_text"][len(prompt):]
+
+
+class ChatGPTPromptor(PromptorInterface):
+    def __init__(self):
+        ACCESS_TOKEN = os.environ.get("CHATGPT_TOKEN")
+        
+        openai.api_key = ACCESS_TOKEN
+
+        self.client = OpenAI()
+
+        self.client = OpenAI()
+
+
+    def do_llm(self, instruction):
+        messages = [
+            {"role": "system", 
+            "content": "You are a helpful assistant."},
+            {"role": "user", "content": instruction}
+            
+        ]
+
+        completion = self.client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages,
+        )
+
+        outputs = completion.choices[0].message.content
+                
+        return self.tokenizer.decode(outputs)

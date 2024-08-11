@@ -1,7 +1,7 @@
 from tqdm import tqdm
 from pathlib import Path
 from loader import DataLoader, JsonLoader, JsonInDirLoader, SummaryLoader, SummarySBSCLoader, SummarySDSCLoader, SummaryAIHubNewsLoader
-from promptor import Promptor, ExaonePromptor, Gemma2Promptor
+from promptor import Promptor, ExaonePromptor, Gemma2Promptor, ChatGPTPromptor
 from promptor.mk_instruction import mk_inst_for_summary, mk_inst_for_summary_w_1shot
 
 from eval import eval
@@ -36,6 +36,8 @@ if model_type == "gemma2":
     promptor = Promptor(Gemma2Promptor)
 elif model_type == "exaone":
     promptor = Promptor(ExaonePromptor)
+elif model_type == "chatgpt":
+    promptor = Promptor(ChatGPTPromptor)
 
 
 output_sum_lst = []
