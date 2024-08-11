@@ -40,10 +40,18 @@ for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=len(src_lst)):
         instruction = mk_inst_for_summary(src)
     elif nshot == 1:
         instruction = mk_inst_for_summary_w_1shot(src, prev_gold_sum)
-    output = promptor.do_llm(instruction)
-    output_sum_lst.append(output)
+    
+    output_sum = promptor.do_llm(instruction)
+    output_sum_lst.append(output_sum)
 
-    output_sum = output.split("[요약]")[-1].replace('\n', ' ')
+    if nshot == 0:
+        output_sum = output_sum.split("[요약]")[-1].replace('\n', ' ')
+    elif nshot == 1:
+        output_sum = output_sum.split("[예제 요약]")[-1].replace('\n', ' ')
+
+    output_sum = output_sum.replace("[|endofturn|]", '')
+    output_sum = output_sum.strip()
+
     rouge_scores, rouge = eval.rouge(output_sum, sum)
     bleu_scores = eval.bleu(output_sum, sum)
     print(f"Rouge scores:\n {rouge_scores}\nRouge: {rouge}")
