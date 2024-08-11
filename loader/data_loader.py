@@ -25,6 +25,48 @@ class DataLoader(DataLoaderInterface):
         return [str(data_file_dir / data_file) for data_file in os.listdir(data_file_dir)]
 
 
+class JsonlLoader(DataLoaderInterface):
+    def __init__(self, *args):
+        self.args = args
+
+    def load(self, file_path, **kwargs):
+        data_lst = []
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+            for line in lines:
+                line = line.strip()
+                data_lst.append(json.loads(line))
+        return data_lst
+
+class JsonInDirLoader(DataLoaderInterface):
+    def __init__(self, *args):
+        self.args = args
+
+    def load(self, file_path_lst, **kwargs):
+        for file_path in file_path_lst:
+            with open(file_path, 'r') as file:
+                try:
+                    data_lst = json.load(file)
+                except:
+                    lines = file.read()
+                    data_lst = json.loads(lines)
+            yield data_lst
+
+class JsonLoader(DataLoaderInterface):
+    def __init__(self, *args):
+        self.args = args
+
+    def load(self, file_path, **kwargs):
+        with open(file_path, 'r') as file:
+            try:
+                data_lst = json.load(file)
+            except:
+                lines = file.read()
+                data_lst = json.loads(lines)
+
+        return data_lst
+
+
 class JsonLoader(DataLoaderInterface):
     def __init__(self, *args):
         assert args[0] in ["json", "jsonl"], print(f"Please input among json, jsonl.")
@@ -64,11 +106,3 @@ class JsonLoader(DataLoaderInterface):
 
         return qa_lst
 
-    def load_jsonl(self, file_path):
-        qa_lst = []
-        with open(file_path, 'r') as file:
-            lines = file.readlines()
-            for line in lines:
-                line = line.strip()
-                qa_lst.append(json.loads(line))
-        return qa_lst
