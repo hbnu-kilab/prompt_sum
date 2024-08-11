@@ -3,7 +3,7 @@ import torch
 from pathlib import Path
 from tqdm import tqdm
 from loader import DataLoader, JsonLoader, JsonInDirLoader, SummaryLoader, SummarySBSCLoader, SummarySDSCLoader, SummaryAIHubNewsLoader
-from prompt import PromptInterface, PromptGemma2
+from prompt import Prompt, PromptGemma2
 
 from eval import eval
 from mk_instruction import *
@@ -29,7 +29,7 @@ elif data_type == "news":
     json_obj = data_loader.load(Path(ROOT_DIR) / data_dir)
     src_lst, sum_lst = sum_loader.load(json_obj)
 
-prompt = PromptInterface(PromptGemma2)
+prompt = Prompt(PromptGemma2)
 
 # model_id = "rtzr/ko-gemma-2-9b-it"
 # pipeline = transformers.pipeline(
