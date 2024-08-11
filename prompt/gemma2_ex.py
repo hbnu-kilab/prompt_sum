@@ -1,39 +1,35 @@
 import transformers
 import torch
 from tqdm import tqdm
-from loader import DataLoader, JsonLoader, JsonInDirLoader
+from loader import DataLoader, JsonLoader, JsonInDirLoader, SummaryLoader, SummarySBSCLoader, SummarySDSCLoader, SummaryAIHubNewsLoader
+
 from eval import eval
 from mk_instruction import *
 
-data_loader = DataLoader(JsonInDirLoader, "json")
-root_dir = "/kilab/data/"
-modu_dir = "modu/NIKL_SBSC_2023_v1.0"
-data_dir_list = data_loader.get_listdir(root_dir, modu_dir)
-
-json_lst = list(data_loader.load(data_dir_list))
-
-src_lst, sum_lst = [], []
+ROOT_DIR = "/kilab/data/"
 
 
-for json_doc in tqdm(json_lst, total=len(json_lst), desc="load json"):
-    for doc in json_doc['document']:
-        for issue_sum in doc['SC']['issue_summary']:
-            topic = issue_sum['issue']['topic']
-            ab_summary = issue_sum['summary']['abstract']['form']
-            ref_lst = issue_sum['summary']['abstract']['reference']
+data_type = "news"
 
-            src_sents = []
-            for ref_id in ref_lst:
-                for sent in doc['sentence']:
-                    if ref_id == sent['id']:
-                        src_sents.append(sent['form'])
-                        break
+if data_type == "SBSC":
+    # SBSC data
+    data_dir = "modu/NIKL_SBSC_2023_v1.0"
+    data_loader = DataLoader(JsonInDirLoader, "json")
+    sum_loader = SummaryLoader(SummarySBSCLoader)
+    data_dir_list = data_loader.get_listdir(ROOT_DIR, data_dir)
+    json_lst = list(data_loader.load(data_dir_list))
+    src_lst, sum_lst = sum_loader.load(json_lst)
+elif data_type == "news":
+    # News data
+    data_dir = "aihub/news/news_valid_original"
+    data_loader = DataLoader(JsonLoader, "json")
+    sum_loader = SummaryLoader(SummaryAIHubNewsLoader)
+    data_dir_list = data_loader.get_listdir(ROOT_DIR, data_dir)
+    json_obj = data_loader.load(data_dir_list)
+    src_lst, sum_lst = sum_loader.load(json_obj)
 
-            src_lst.append(' '.join(src_sents))
-            sum_lst.append(ab_summary)
-        
+
 model_id = "rtzr/ko-gemma-2-9b-it"
-
 pipeline = transformers.pipeline(
     "text-generation",
     model=model_id,

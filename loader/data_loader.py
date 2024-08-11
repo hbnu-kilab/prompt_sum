@@ -71,32 +71,7 @@ class JsonLoader(DataLoaderInterface):
     def __init__(self, *args):
         assert args[0] in ["json", "jsonl"], print(f"Please input among json, jsonl.")
 
-        self.file_ext = args[0]
-        if args[0] == "json":
-            self.flag_line = False
-        elif args[0] == "jsonl":
-            self.flag_line = True
-
     def load(self, file_path, **kwargs):
-        if self.file_ext == "jsonl":
-            return self.load_jsonl(file_path)
-        elif self.file_ext == "json":
-            if type(file_path) == list:
-                return self.load_json_in_dir(file_path)
-            else:
-                return self.load_json(file_path)
-
-    def load_json_in_dir(self, file_path_lst):
-        for file_path in file_path_lst:
-            with open(file_path, 'r') as file:
-                try:
-                    qa_lst = json.load(file)
-                except:
-                    lines = file.read()
-                    qa_lst = json.loads(lines)
-            yield qa_lst
-
-    def load_json(self, file_path):
         with open(file_path, 'r') as file:
             try:
                 qa_lst = json.load(file)
@@ -105,4 +80,5 @@ class JsonLoader(DataLoaderInterface):
                 qa_lst = json.loads(lines)
 
         return qa_lst
+
 
