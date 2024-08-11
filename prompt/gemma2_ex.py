@@ -78,6 +78,10 @@ for i, (src, sum) in enumerate(zip(src_lst, sum_lst)):
     outputs, output_sum = do_llm(instruction)
     output_sum_lst.append(output_sum)
 
+    output_sum = output_sum.split("[예제 요약]")[0].replace('\n', ' ')
     rouge_scores, rouge = eval.rouge(output_sum, sum)
+    bleu_scores = eval.bleu(output_sum, sum)
+    print(f"Rouge scores:\n {rouge_scores}\nRouge: {rouge}")
+    print(f"BLEU scores:\n {bleu_scores}")
     print(output_sum)
 
