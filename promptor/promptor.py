@@ -45,10 +45,10 @@ class ExaonePromptor(PromptorInterface):
         output = self.model.generate(
             input_ids.to("cuda"),
             eos_token_id=self.tokenizer.eos_token_id,
-            max_new_tokens=128
+            max_new_tokens=2048
         )
         
-        return self.tokenizer.decode(output[0])
+        return self.tokenizer.decode(output[0][len(input_ids[0]):])
 
 
 class Gemma2Promptor(PromptorInterface):
