@@ -39,7 +39,7 @@ for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=len(src_lst)):
     output = promptor.do_llm(instruction)
     output_sum_lst.append(output)
 
-    output_sum = output_sum.split("[예제 요약]")[0].replace('\n', ' ')
+    output_sum = output.split("[예제 요약]")[0].replace('\n', ' ')
     rouge_scores, rouge = eval.rouge(output_sum, sum)
     bleu_scores = eval.bleu(output_sum, sum)
     print(f"Rouge scores:\n {rouge_scores}\nRouge: {rouge}")
