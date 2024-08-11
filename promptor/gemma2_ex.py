@@ -1,7 +1,7 @@
 from pathlib import Path
 from tqdm import tqdm
 from loader import DataLoader, JsonLoader, JsonInDirLoader, SummaryLoader, SummarySBSCLoader, SummarySDSCLoader, SummaryAIHubNewsLoader
-from promptor import Prompt, PromptGemma2
+from promptor import Promptor, Gemma2Promptor
 
 from eval import eval
 from mk_instruction import *
@@ -27,7 +27,7 @@ elif data_type == "news":
     json_obj = data_loader.load(Path(ROOT_DIR) / data_dir)
     src_lst, sum_lst = sum_loader.load(json_obj)
 
-prompt = Prompt(PromptGemma2)
+prompt = Promptor(Gemma2Promptor)
 
 # model_id = "rtzr/ko-gemma-2-9b-it"
 # pipeline = transformers.pipeline(

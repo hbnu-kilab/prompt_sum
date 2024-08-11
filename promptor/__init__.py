@@ -1,2 +1,2 @@
 from .promptor_interface import PromptorInterface
-from .promptor import Promptor, PromptorGemma2
+from .promptor import Promptor, Gemma2Promptor

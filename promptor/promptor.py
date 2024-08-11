@@ -1,7 +1,7 @@
 import torch
 import transformers
 from tqdm import tqdm
-from .prompt_interface import PromptorInterface
+from .promptor_interface import PromptorInterface
 
 class Promptor(PromptorInterface):
     def __init__(self, 
