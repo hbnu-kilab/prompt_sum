@@ -5,6 +5,7 @@ from promptor import Promptor, ExaonePromptor, Gemma2Promptor
 from promptor.mk_instruction import mk_inst_for_summary, mk_inst_for_summary_w_1shot
 
 from eval import eval
+import evaluate
 
 ROOT_DIR = "/kilab/data/"
 
@@ -33,6 +34,8 @@ if model_type == "gemma2":
 elif model_type == "exaone":
     promptor = Promptor(ExaonePromptor)
 
+
+metric = evaluate.combine(["bleu", "rouge"])
 output_sum_lst = []
 for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=len(src_lst)):
     prev_gold_sum = sum_lst[i-1]
@@ -52,6 +55,17 @@ for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=len(src_lst)):
     output_sum = output_sum.replace("[|endofturn|]", '')
     output_sum = output_sum.strip()
 
+    metric.add_batch(predictions=[output_sum], references=[sum])
+    eval_metric = metric.compute()
+    print({
+        "bleu": eval_metric["bleu"]*100,
+        "eval_rouge1": eval_metric["rouge1"]*100,
+        "eval_rouge2": eval_metric["rouge2"]*100,
+        "eval_rougeL": eval_metric["rougeL"]*100,
+        "eval_rougeLsum": eval_metric["rougeLsum"]*100,
+
+    })
+    
     rouge_scores, rouge = eval.rouge(output_sum, sum)
     bleu_scores = eval.bleu(output_sum, sum)
     print(f"Rouge scores:\n {rouge_scores}\nRouge: {rouge}")
