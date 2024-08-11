@@ -95,13 +95,12 @@ class Gemma2Promptor(PromptorInterface):
 
 class ChatGPTPromptor(PromptorInterface):
     def __init__(self):
-        ACCESS_TOKEN = os.environ.get("CHATGPT_TOKEN")
+        ACCESS_TOKEN = os.environ.get("OPENAI_API_KEY")
         
         openai.api_key = ACCESS_TOKEN
 
         self.client = OpenAI()
 
-        self.client = OpenAI()
 
 
     def do_llm(self, instruction):
