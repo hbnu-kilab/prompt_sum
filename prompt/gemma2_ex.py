@@ -15,12 +15,21 @@ src_lst, sum_lst = [], []
 
 for json_doc in json_lst:
     for doc in json_doc['document']:
-        src = ''
-        for sent in doc['sentence']:
-            src += sent['form']
+        for issue_sum in doc['SC']['issue_summary']:
+            topic = issue_sum['issue']['topic']
+            ab_summary = issue_sum['summary']['abstract']['form']
+            ref_lst = issue_sum['summary']['abstract']['reference']
+
+            src_sents = []
+            for ref_id in ref_lst:
+                for sent in doc['sentence']:
+                    if ref_id == sent['id']:
+                        src_sents.append(sent['form'])
+                        break
+
+            src_lst.append(' '.join(src_sents))
+            sum_lst.append(ab_summary)
         
-        src_lst.append(src)
-        sum_lst.append(doc['SC']['main_summary'])
 
 model_id = "rtzr/ko-gemma-2-9b-it"
 
