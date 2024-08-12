@@ -61,7 +61,11 @@ with open(f"./result/pred_{model_type}", 'w') as pf, open(f"./result/gold_{model
         output_sum, sum = postprocess_text(output_sum, sum)
 
         metric.add_batch(predictions=[output_sum], references=[sum])
-        eval_metric = metric.compute()
+        try:
+            eval_metric = metric.compute()
+        except ZeroDivisionError as e:
+            print("Error: Cannot divide by zero")
+
         print({
             "bleu": eval_metric["bleu"]*100,
             "eval_rouge1": eval_metric["rouge1"]*100,
