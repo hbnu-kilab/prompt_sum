@@ -14,6 +14,10 @@ ROOT_DIR = "/kilab/data/"
 
 data_type = "news"
 model_type = "exaone"
+"""
+rtzr/ko-gemma-2-9b-it
+carrotter/ko-gemma-2b-it-sft
+"""
 nshot = 0
 
 if data_type == "SBSC":
@@ -33,11 +37,15 @@ elif data_type == "news":
     src_lst, sum_lst = sum_loader.load(json_obj)
 
 if model_type == "gemma2":
-    promptor = Promptor(Gemma2Promptor)
+    model_id = "carrotter/ko-gemma-2b-it-sft"
+    # model_id = "rtzr/ko-gemma-2-9b-it"
+    promptor = Promptor(Gemma2Promptor, model_id)
 elif model_type == "exaone":
-    promptor = Promptor(ExaonePromptor)
-elif model_type == "chatgpt":
-    promptor = Promptor(ChatGPTPromptor)
+    model_id = "LGAI-EXAONE/EXAONE-3.0-7.8B-Instruct"
+    promptor = Promptor(ExaonePromptor, model_id)
+elif model_type in ["gpt4o-mini"]:
+    model_id = "gpt4o-mini"
+    promptor = Promptor(ChatGPTPromptor, model_id)
 
 
 with open(f"./result/pred_{model_type}", 'w') as pf, open(f"./result/gold_{model_type}", 'w') as gf:

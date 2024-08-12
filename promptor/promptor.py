@@ -10,15 +10,16 @@ from .promptor_interface import PromptorInterface
 
 class Promptor(PromptorInterface):
     def __init__(self, 
-                 file_system: PromptorInterface):
-        self.file_system = file_system()
+                 file_system: PromptorInterface,
+                 *args):
+        self.file_system = file_system(*args)
     
     def do_llm(self, instruction):
         return self.file_system.do_llm(instruction)
 
 
 class ExaonePromptor(PromptorInterface):
-    def __init__(self):
+    def __init__(self, *args):
         ACCESS_TOKEN = os.environ.get("HFTOKEN")
         login(token=ACCESS_TOKEN)
 
@@ -54,8 +55,9 @@ class ExaonePromptor(PromptorInterface):
 
 
 class Gemma2Promptor(PromptorInterface):
-    def __init__(self):
-        model_id = "rtzr/ko-gemma-2-9b-it"
+    def __init__(self, *args):
+        # model_id = "rtzr/ko-gemma-2-9b-it"
+        model_id = args[0]
         self.pipeline = transformers.pipeline(
             "text-generation",
             model=model_id,
@@ -94,7 +96,7 @@ class Gemma2Promptor(PromptorInterface):
 
 
 class ChatGPTPromptor(PromptorInterface):
-    def __init__(self):
+    def __init__(self, *args):
         ACCESS_TOKEN = os.environ.get("OPENAI_API_KEY")
         
         openai.api_key = ACCESS_TOKEN
