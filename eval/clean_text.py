@@ -22,6 +22,7 @@ def clean_data(text):
 
 def clean_data_ko(text):
     text = text.replace("[|endofturn|]", '')
+    
     return text
 
 def postprocess_text(pred, label):

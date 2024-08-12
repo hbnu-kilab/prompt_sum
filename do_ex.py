@@ -40,43 +40,55 @@ elif model_type == "chatgpt":
     promptor = Promptor(ChatGPTPromptor)
 
 
-output_sum_lst = []
-for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=len(src_lst)):
-    prev_gold_sum = sum_lst[i-1]
-    if nshot == 0:
-        instruction = mk_inst_for_summary(src)
-    elif nshot == 1:
-        instruction = mk_inst_for_summary_w_1shot(src, prev_gold_sum)
-    
-    output_sum = promptor.do_llm(instruction)
-    output_sum_lst.append(output_sum)
+with open(f"./result/pred_{model_type}", 'w') as pf, open(f"./result/gold_{model_type}", 'w') as gf:
+    output_sum_lst = []
+    for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=len(src_lst)):
+        prev_gold_sum = sum_lst[i-1]
+        if nshot == 0:
+            instruction = mk_inst_for_summary(src)
+        elif nshot == 1:
+            instruction = mk_inst_for_summary_w_1shot(src, prev_gold_sum)
+        
+        output_sum = promptor.do_llm(instruction)
+        output_sum_lst.append(output_sum)
 
-    if nshot == 0:
-        output_sum = output_sum.split("[요약]")[-1].replace('\n', ' ')
-    elif nshot == 1:
-        output_sum = output_sum.split("[예제 요약]")[-1].replace('\n', ' ')
+        if nshot == 0:
+            output_sum = output_sum.split("[요약]")[-1].replace('\n', ' ')
+        elif nshot == 1:
+            output_sum = output_sum.split("[예제 요약]")[-1].replace('\n', ' ')
 
-    output_sym = clean_data_ko(output_sum)
-    output_sum, sum = postprocess_text(output_sum, sum)
+        output_sum = clean_data_ko(output_sum)
+        output_sum, sum = postprocess_text(output_sum, sum)
 
-    metric.add_batch(predictions=[output_sum], references=[sum])
-    eval_metric = metric.compute()
-    print({
-        "bleu": eval_metric["bleu"]*100,
-        "eval_rouge1": eval_metric["rouge1"]*100,
-        "eval_rouge2": eval_metric["rouge2"]*100,
-        "eval_rougeL": eval_metric["rougeL"]*100,
-        "eval_rougeLsum": eval_metric["rougeLsum"]*100,
-        "meteor": eval_metric["meteor"]*100,
-    })
+        metric.add_batch(predictions=[output_sum], references=[sum])
+        eval_metric = metric.compute()
+        print({
+            "bleu": eval_metric["bleu"]*100,
+            "eval_rouge1": eval_metric["rouge1"]*100,
+            "eval_rouge2": eval_metric["rouge2"]*100,
+            "eval_rougeL": eval_metric["rougeL"]*100,
+            "eval_rougeLsum": eval_metric["rougeLsum"]*100,
+            "meteor": eval_metric["meteor"]*100,
+        })
 
-    # rouge_scores, rouge = eval.rouge(output_sum, sum)
-    # bleu_scores = eval.bleu(output_sum, sum)
-    # print(f"Rouge scores:\n {rouge_scores}\nRouge: {rouge}")
-    # print(f"BLEU scores:\n {bleu_scores}")
-    
-    print(f"Input text: {instruction}")
-    print(f"Output summary: {output_sum}")
-    print(f"Gold Output summary: {sum}\n\n\n")
+        # rouge_scores, rouge = eval.rouge(output_sum, sum)
+        # bleu_scores = eval.bleu(output_sum, sum)
+        # print(f"Rouge scores:\n {rouge_scores}\nRouge: {rouge}")
+        # print(f"BLEU scores:\n {bleu_scores}")
+        
+        print(f"Input text: {instruction}")
+        print(f"Output summary: {output_sum}")
+        pf.write(f"{output_sum}\n")
+        gf.write(f"{sum}\n")
+        print(f"Gold Output summary: {sum}\n\n\n")
 
 metric.add_batch(predictions=output_sum_lst, references=sum_lst)
+eval_metric = metric.compute()
+print({
+    "FINAL // bleu": eval_metric["bleu"]*100,
+    "eval_rouge1": eval_metric["rouge1"]*100,
+    "eval_rouge2": eval_metric["rouge2"]*100,
+    "eval_rougeL": eval_metric["rougeL"]*100,
+    "eval_rougeLsum": eval_metric["rougeLsum"]*100,
+    "meteor": eval_metric["meteor"]*100,
+})
