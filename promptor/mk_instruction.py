@@ -34,8 +34,15 @@ def mk_inst_for_summary_w_cda(sent, cda):
                 [요약]: ".split())
 
 def mk_inst_for_counterfactual_summary(sent):
-    return ' '.join(f"[원문]이 주어지면 개체명(named entity)를 기반으로 counterfactual summary를 [Counterfactual Summary] 뒤에 한 문장으로 요약해줘. 항상 이 포맷을 잘 지켜주고. \
-                counterfactual summary를 만들때 개체명에 해당하는 단어는 같은 개체명 레이블에 해당하는 단어들 중 하나로 바꿔주고. \
-                꼭 한문장으로 요약해주고. \n \
+    return ' '.join(f"주어진 [원문]에 대하여 잘못된 요약(counterfactual)을 만들어줘. [요약] 뒤에 생성해주면 돼.\
+                요약은 한 문장으로 만들고, 개체명에 해당하는 단어는 같은 개체명 레이블에 해당하는 단어들 중 하나로 바꿔주고. \n \
                 [원문]: {sent} \n \
-                [Counterfactual Summary]: ".split())
+                [요약]: ".split())
+
+
+# def mk_inst_for_counterfactual_summary(sent):
+#     return ' '.join(f"[원문]이 주어지면 개체명(named entity)를 기반으로 counterfactual summary를 [Counterfactual Summary] 뒤에 한 문장으로 요약해줘. 항상 이 포맷을 잘 지켜주고. \
+#                 counterfactual summary를 만들때 개체명에 해당하는 단어는 같은 개체명 레이블에 해당하는 단어들 중 하나로 바꿔주고. \
+#                 꼭 한문장으로 요약해주고. \n \
+#                 [원문]: {sent} \n \
+#                 [Counterfactual Summary]: ".split())
