@@ -2,7 +2,7 @@ from tqdm import tqdm
 from pathlib import Path
 from loader import DataLoader, JsonLoader, JsonInDirLoader, SummaryLoader, SummarySBSCLoader, SummarySDSCLoader, SummaryAIHubNewsLoader
 from promptor import Promptor, ExaonePromptor, Gemma2Promptor, ChatGPTPromptor
-from promptor.mk_instruction import mk_inst_for_summary, mk_inst_for_summary_w_1shot, mk_inst_for_counterfactual_summary, mk_inst_for_summary_w_cda
+from promptor.mk_instruction import mk_inst_for_summary, mk_inst_for_summary_w_1shot, mk_inst_for_counterfactual_summary, mk_inst_for_summary_w_cda, mk_inst_for_counterfactual_summary_en, mk_inst_for_summary_w_cda_en
 
 from eval import eval
 from eval.clean_text import postprocess_text, clean_data_ko
@@ -112,7 +112,7 @@ def sum_w_cda(model_type, src_lst, sum_lst, metric):
         for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=len(src_lst)):
             prev_gold_sum = sum_lst[i-1]
             
-            counterfactual_instruction = mk_inst_for_counterfactual_summary(src)
+            counterfactual_instruction = mk_inst_for_counterfactual_summary_en(src)
             counterfactual_sum = promptor.do_llm(counterfactual_instruction)
             
             # counterfactual_sum = counterfactual_sum.split("[Counterfactual Summary]")[-1].replace('\n', ' ')
@@ -120,12 +120,11 @@ def sum_w_cda(model_type, src_lst, sum_lst, metric):
 
 
             if nshot == 0:
-                instruction = mk_inst_for_summary_w_cda(src, counterfactual_sum)
+                instruction = mk_inst_for_summary_w_cda_en(src, counterfactual_sum)
             elif nshot == 1:
                 instruction = mk_inst_for_summary_w_1shot(src, prev_gold_sum)
             
             output_sum = promptor.do_llm(instruction)
-            output_sum_lst.append(output_sum)
 
             if nshot == 0:
                 output_sum = output_sum.split("[요약]")[-1].replace('\n', ' ')
@@ -135,6 +134,7 @@ def sum_w_cda(model_type, src_lst, sum_lst, metric):
             output_sum = clean_data_ko(output_sum)
             output_sum, sum = postprocess_text(output_sum, sum)
 
+            output_sum_lst.append(output_sum)
             metric.add_batch(predictions=[output_sum], references=[sum])
             try:
                 eval_metric = metric.compute()
@@ -152,8 +152,8 @@ def sum_w_cda(model_type, src_lst, sum_lst, metric):
     
             print(f"Input text: {instruction}")
             print(f"Output summary: {output_sum}")
-            print(f"Gold Output summary: {sum}\n\n\n")
-            print(f"Counterfactual summary: {counterfactual_sum}")
+            print(f"Gold Output summary: {sum}")
+            print(f"Counterfactual summary: {counterfactual_sum}\n\n\n")
             pf.write(f"{output_sum}\n")
             gf.write(f"{sum}\n")
             cf.write(f"{counterfactual_sum}\n")

@@ -103,6 +103,8 @@ class ChatGPTPromptor(PromptorInterface):
 
         self.client = OpenAI()
 
+        self.model_id = args[0]
+
 
 
     def do_llm(self, instruction):
@@ -114,7 +116,7 @@ class ChatGPTPromptor(PromptorInterface):
         ]
 
         completion = self.client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=self.model_id,
             messages=messages,
         )
 
