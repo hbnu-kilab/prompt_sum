@@ -114,7 +114,8 @@ def sum_w_cda(model_type, src_lst, sum_lst, metric):
             
             counterfactual_instruction = mk_inst_for_counterfactual_summary(src)
             counterfactual_sum = promptor.do_llm(counterfactual_instruction)
-            counterfactual_sum = counterfactual_sum.split("[Counterfactual Summary]")[-1].replace('\n', ' ')
+            
+            # counterfactual_sum = counterfactual_sum.split("[Counterfactual Summary]")[-1].replace('\n', ' ')
             counterfactual_sum = clean_data_ko(counterfactual_sum)
 
 
@@ -151,8 +152,8 @@ def sum_w_cda(model_type, src_lst, sum_lst, metric):
     
             print(f"Input text: {instruction}")
             print(f"Output summary: {output_sum}")
-            print(f"Counterfactual summary: {counterfactual_sum}")
             print(f"Gold Output summary: {sum}\n\n\n")
+            print(f"Counterfactual summary: {counterfactual_sum}")
             pf.write(f"{output_sum}\n")
             gf.write(f"{sum}\n")
             cf.write(f"{counterfactual_sum}\n")
