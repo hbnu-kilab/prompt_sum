@@ -37,6 +37,9 @@ elif data_type == "news":
     json_obj = data_loader.load(Path(ROOT_DIR) / data_dir)
     src_lst, sum_lst = sum_loader.load(json_obj)
 
+    src_lst = src_lst[:len(src_lst)//5]
+    sum_lst = sum_lst[:len(sum_lst)//5]
+
 if model_type == "gemma2":
     model_id = "carrotter/ko-gemma-2b-it-sft"
     # model_id = "rtzr/ko-gemma-2-9b-it"
@@ -110,13 +113,15 @@ def sum_w_cda(model_type, src_lst, sum_lst, metric):
             prev_gold_sum = sum_lst[i-1]
             
             counterfactual_instruction = mk_inst_for_counterfactual_summary(src)
-            counterfactual_sum = promptor.do_llm(instruction)
+            counterfactual_sum = promptor.do_llm(counterfactual_instruction)
+            counterfactual_sum = counterfactual_sum.split("[Counterfactual Summary]")[-1].replace('\n', ' ')
+            counterfactual_sum = clean_data_ko(counterfactual_sum)
+
 
             if nshot == 0:
                 instruction = mk_inst_for_summary_w_cda(src, counterfactual_sum)
             elif nshot == 1:
                 instruction = mk_inst_for_summary_w_1shot(src, prev_gold_sum)
-            
             
             output_sum = promptor.do_llm(instruction)
             output_sum_lst.append(output_sum)
@@ -147,10 +152,10 @@ def sum_w_cda(model_type, src_lst, sum_lst, metric):
             print(f"Input text: {instruction}")
             print(f"Output summary: {output_sum}")
             print(f"Counterfactual summary: {counterfactual_sum}")
+            print(f"Gold Output summary: {sum}\n\n\n")
             pf.write(f"{output_sum}\n")
             gf.write(f"{sum}\n")
             cf.write(f"{counterfactual_sum}\n")
-            print(f"Gold Output summary: {sum}\n\n\n")
 
     metric.add_batch(predictions=output_sum_lst, references=sum_lst)
     eval_metric = metric.compute()
