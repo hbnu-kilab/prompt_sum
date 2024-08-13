@@ -2,7 +2,7 @@ from tqdm import tqdm
 from pathlib import Path
 from loader import DataLoader, JsonLoader, JsonInDirLoader, SummaryLoader, SummarySBSCLoader, SummarySDSCLoader, SummaryAIHubNewsLoader
 from promptor import Promptor, ExaonePromptor, Gemma2Promptor, ChatGPTPromptor
-from promptor.mk_instruction import mk_inst_for_summary, mk_inst_for_summary_w_1shot
+from promptor.mk_instruction import mk_inst_for_summary, mk_inst_for_summary_w_1shot, mk_inst_for_counterfactual_summary, mk_inst_for_summary_w_cda
 
 from eval import eval
 from eval.clean_text import postprocess_text, clean_data_ko
@@ -14,6 +14,7 @@ ROOT_DIR = "/kilab/data/"
 
 data_type = "news"
 model_type = "exaone"
+do_cda = False
 """
 rtzr/ko-gemma-2-9b-it
 carrotter/ko-gemma-2b-it-sft
@@ -47,60 +48,123 @@ elif model_type in ["gpt4o-mini"]:
     model_id = "gpt4o-mini"
     promptor = Promptor(ChatGPTPromptor, model_id)
 
+def baseline(model_type, src_lst, sum_lst, metric):
+    with open(f"./result/pred_{model_type}", 'w') as pf, open(f"./result/gold_{model_type}", 'w') as gf:
+        output_sum_lst = []
+        for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=len(src_lst)):
+            prev_gold_sum = sum_lst[i-1]
+            if nshot == 0:
+                instruction = mk_inst_for_summary(src)
+            elif nshot == 1:
+                instruction = mk_inst_for_summary_w_1shot(src, prev_gold_sum)
+            
+            output_sum = promptor.do_llm(instruction)
+            output_sum_lst.append(output_sum)
 
-with open(f"./result/pred_{model_type}", 'w') as pf, open(f"./result/gold_{model_type}", 'w') as gf:
-    output_sum_lst = []
-    for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=len(src_lst)):
-        prev_gold_sum = sum_lst[i-1]
-        if nshot == 0:
-            instruction = mk_inst_for_summary(src)
-        elif nshot == 1:
-            instruction = mk_inst_for_summary_w_1shot(src, prev_gold_sum)
-        
-        output_sum = promptor.do_llm(instruction)
-        output_sum_lst.append(output_sum)
+            if nshot == 0:
+                output_sum = output_sum.split("[요약]")[-1].replace('\n', ' ')
+            elif nshot == 1:
+                output_sum = output_sum.split("[예제 요약]")[-1].replace('\n', ' ')
 
-        if nshot == 0:
-            output_sum = output_sum.split("[요약]")[-1].replace('\n', ' ')
-        elif nshot == 1:
-            output_sum = output_sum.split("[예제 요약]")[-1].replace('\n', ' ')
+            output_sum = clean_data_ko(output_sum)
+            output_sum, sum = postprocess_text(output_sum, sum)
 
-        output_sum = clean_data_ko(output_sum)
-        output_sum, sum = postprocess_text(output_sum, sum)
+            metric.add_batch(predictions=[output_sum], references=[sum])
+            try:
+                eval_metric = metric.compute()
+            except ZeroDivisionError as e:
+                print("Error: Cannot divide by zero")
 
-        metric.add_batch(predictions=[output_sum], references=[sum])
-        try:
-            eval_metric = metric.compute()
-        except ZeroDivisionError as e:
-            print("Error: Cannot divide by zero")
+            print({
+                "bleu": eval_metric["bleu"]*100,
+                "eval_rouge1": eval_metric["rouge1"]*100,
+                "eval_rouge2": eval_metric["rouge2"]*100,
+                "eval_rougeL": eval_metric["rougeL"]*100,
+                "eval_rougeLsum": eval_metric["rougeLsum"]*100,
+                "meteor": eval_metric["meteor"]*100,
+            })
+    
+            print(f"Input text: {instruction}")
+            print(f"Output summary: {output_sum}")
+            pf.write(f"{output_sum}\n")
+            gf.write(f"{sum}\n")
+            print(f"Gold Output summary: {sum}\n\n\n")
 
-        print({
-            "bleu": eval_metric["bleu"]*100,
-            "eval_rouge1": eval_metric["rouge1"]*100,
-            "eval_rouge2": eval_metric["rouge2"]*100,
-            "eval_rougeL": eval_metric["rougeL"]*100,
-            "eval_rougeLsum": eval_metric["rougeLsum"]*100,
-            "meteor": eval_metric["meteor"]*100,
-        })
+    metric.add_batch(predictions=output_sum_lst, references=sum_lst)
+    eval_metric = metric.compute()
+    print({
+        "FINAL // bleu": eval_metric["bleu"]*100,
+        "eval_rouge1": eval_metric["rouge1"]*100,
+        "eval_rouge2": eval_metric["rouge2"]*100,
+        "eval_rougeL": eval_metric["rougeL"]*100,
+        "eval_rougeLsum": eval_metric["rougeLsum"]*100,
+        "meteor": eval_metric["meteor"]*100,
+    })
 
-        # rouge_scores, rouge = eval.rouge(output_sum, sum)
-        # bleu_scores = eval.bleu(output_sum, sum)
-        # print(f"Rouge scores:\n {rouge_scores}\nRouge: {rouge}")
-        # print(f"BLEU scores:\n {bleu_scores}")
-        
-        print(f"Input text: {instruction}")
-        print(f"Output summary: {output_sum}")
-        pf.write(f"{output_sum}\n")
-        gf.write(f"{sum}\n")
-        print(f"Gold Output summary: {sum}\n\n\n")
 
-metric.add_batch(predictions=output_sum_lst, references=sum_lst)
-eval_metric = metric.compute()
-print({
-    "FINAL // bleu": eval_metric["bleu"]*100,
-    "eval_rouge1": eval_metric["rouge1"]*100,
-    "eval_rouge2": eval_metric["rouge2"]*100,
-    "eval_rougeL": eval_metric["rougeL"]*100,
-    "eval_rougeLsum": eval_metric["rougeLsum"]*100,
-    "meteor": eval_metric["meteor"]*100,
-})
+
+def sum_w_cda(model_type, src_lst, sum_lst, metric):
+    with open(f"./result/pred_{model_type}", 'w') as pf, open(f"./result/gold_{model_type}", 'w') as gf, open(f"./result/counterfactual_{model_type}", 'w') as cf:
+        output_sum_lst = []
+        for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=len(src_lst)):
+            prev_gold_sum = sum_lst[i-1]
+            
+            counterfactual_instruction = mk_inst_for_counterfactual_summary(src)
+            counterfactual_sum = promptor.do_llm(instruction)
+
+            if nshot == 0:
+                instruction = mk_inst_for_summary_w_cda(src, counterfactual_sum)
+            elif nshot == 1:
+                instruction = mk_inst_for_summary_w_1shot(src, prev_gold_sum)
+            
+            
+            output_sum = promptor.do_llm(instruction)
+            output_sum_lst.append(output_sum)
+
+            if nshot == 0:
+                output_sum = output_sum.split("[요약]")[-1].replace('\n', ' ')
+            elif nshot == 1:
+                output_sum = output_sum.split("[예제 요약]")[-1].replace('\n', ' ')
+
+            output_sum = clean_data_ko(output_sum)
+            output_sum, sum = postprocess_text(output_sum, sum)
+
+            metric.add_batch(predictions=[output_sum], references=[sum])
+            try:
+                eval_metric = metric.compute()
+            except ZeroDivisionError as e:
+                print("Error: Cannot divide by zero")
+
+            print({
+                "bleu": eval_metric["bleu"]*100,
+                "eval_rouge1": eval_metric["rouge1"]*100,
+                "eval_rouge2": eval_metric["rouge2"]*100,
+                "eval_rougeL": eval_metric["rougeL"]*100,
+                "eval_rougeLsum": eval_metric["rougeLsum"]*100,
+                "meteor": eval_metric["meteor"]*100,
+            })
+    
+            print(f"Input text: {instruction}")
+            print(f"Output summary: {output_sum}")
+            print(f"Counterfactual summary: {counterfactual_sum}")
+            pf.write(f"{output_sum}\n")
+            gf.write(f"{sum}\n")
+            cf.write(f"{counterfactual_sum}\n")
+            print(f"Gold Output summary: {sum}\n\n\n")
+
+    metric.add_batch(predictions=output_sum_lst, references=sum_lst)
+    eval_metric = metric.compute()
+    print({
+        "FINAL // bleu": eval_metric["bleu"]*100,
+        "eval_rouge1": eval_metric["rouge1"]*100,
+        "eval_rouge2": eval_metric["rouge2"]*100,
+        "eval_rougeL": eval_metric["rougeL"]*100,
+        "eval_rougeLsum": eval_metric["rougeLsum"]*100,
+        "meteor": eval_metric["meteor"]*100,
+    })
+
+
+if do_cda:
+    sum_w_cda(model_type, src_lst, sum_lst, metric)
+else:
+    baseline(model_type, src_lst, sum_lst, metric)
