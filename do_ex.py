@@ -107,7 +107,7 @@ def baseline(model_type, src_lst, sum_lst, metric):
 
 
 def sum_w_cda(model_type, src_lst, sum_lst, metric):
-    with open(f"./result/pred_{model_type}", 'w') as pf, open(f"./result/gold_{model_type}", 'w') as gf, open(f"./result/counterfactual_{model_type}", 'w') as cf:
+    with open(f"./result/pred_w_cda_{model_type}", 'w') as pf, open(f"./result/gold_w_cda_{model_type}", 'w') as gf, open(f"./result/counterfactual_w_cda_{model_type}", 'w') as cf:
         output_sum_lst = []
         for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=len(src_lst)):
             prev_gold_sum = sum_lst[i-1]
