@@ -12,8 +12,8 @@ metric = evaluate.combine(["bleu", "rouge", "meteor"])
 
 ROOT_DIR = "/kilab/data/"
 
-data_type = "news"
-model_type = "exaone"
+data_type = "law"
+model_type = "gpt4o-mini"
 do_cda = False
 """
 rtzr/ko-gemma-2-9b-it
@@ -39,6 +39,13 @@ elif data_type == "news":
 
     src_lst = src_lst[:len(src_lst)//5]
     sum_lst = sum_lst[:len(sum_lst)//5]
+elif data_type == "law":
+    data_dir = "aihub/summarization/law/valid_original.json"
+    data_loader = DataLoader(JsonLoader, "json")
+    sum_loader = SummaryLoader(SummaryAIHubNewsLoader)
+    json_obj = data_loader.load(Path(ROOT_DIR) / data_dir)
+    src_lst, sum_lst = sum_loader.load(json_obj)
+
 
 if model_type == "gemma2":
     model_id = "carrotter/ko-gemma-2b-it-sft"
