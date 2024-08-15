@@ -8,9 +8,9 @@ with open(file_path, 'r') as f:
     lines = f.readlines()
     sum_lst, output_sum_lst = [], []
     for line in tqdm(lines, total=len(lines)):
-        if "Output summary: " in line[:13]:
+        if "Output summary: " in line[:16]:
             output_sum_lst.append(line)
-        elif "Gold Output summary:" in line:
+        if "Gold Output summary:" in line:
             sum_lst.append(line)
     
 metric.add_batch(predictions=output_sum_lst, references=sum_lst)

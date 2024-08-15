@@ -4,11 +4,13 @@ from loader import DataLoader, JsonLoader, JsonInDirLoader, SummaryLoader, Summa
 from promptor import Promptor, ExaonePromptor, Gemma2Promptor, ChatGPTPromptor
 from promptor.mk_instruction import mk_inst_for_summary, mk_inst_for_summary_w_1shot, mk_inst_for_counterfactual_summary, mk_inst_for_summary_w_cda, mk_inst_for_counterfactual_summary_en, mk_inst_for_summary_w_cda_en
 
+from transformers import AutoTokenizer
 from eval import eval
 from eval.clean_text import postprocess_text, clean_data_ko
 import evaluate
 
 metric = evaluate.combine(["bleu", "rouge", "meteor"])
+tokenizer = AutoTokenizer.from_pretrained("klue/roberta-base")
 
 ROOT_DIR = "/kilab/data/"
 
@@ -60,7 +62,8 @@ elif model_type in ["gpt4o-mini"]:
 
 def baseline(model_type, src_lst, sum_lst, metric):
     with open(f"./result/pred_{model_type}", 'w') as pf, open(f"./result/gold_{model_type}", 'w') as gf:
-        output_sum_lst = []
+        tokenized_output_sum_lst, tokenized_sum_lst = [], []
+
         for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=len(src_lst)):
             prev_gold_sum = sum_lst[i-1]
             if nshot == 0:
@@ -69,7 +72,6 @@ def baseline(model_type, src_lst, sum_lst, metric):
                 instruction = mk_inst_for_summary_w_1shot(src, prev_gold_sum)
             
             output_sum = promptor.do_llm(instruction)
-            output_sum_lst.append(output_sum)
 
             if nshot == 0:
                 output_sum = output_sum.split("[요약]")[-1].replace('\n', ' ')
@@ -79,7 +81,13 @@ def baseline(model_type, src_lst, sum_lst, metric):
             output_sum = clean_data_ko(output_sum)
             output_sum, sum = postprocess_text(output_sum, sum)
 
-            metric.add_batch(predictions=[output_sum], references=[sum])
+            tokenized_output_sum = ' '.join(tokenizer.tokenize(output_sum))
+            tokenized_sum = ' '.join(tokenizer.tokenize(sum))
+
+            tokenized_output_sum_lst.append(tokenized_output_sum)
+            tokenized_sum_lst.append(tokenized_sum)
+            
+            metric.add_batch(predictions=[tokenized_output_sum], references=[tokenized_sum])
             try:
                 eval_metric = metric.compute()
             except ZeroDivisionError as e:
@@ -100,7 +108,7 @@ def baseline(model_type, src_lst, sum_lst, metric):
             gf.write(f"{sum}\n")
             print(f"Gold Output summary: {sum}\n\n\n")
 
-    metric.add_batch(predictions=output_sum_lst, references=sum_lst)
+    metric.add_batch(predictions=tokenized_output_sum_lst, references=tokenized_sum_lst)
     eval_metric = metric.compute()
     print({
         "FINAL // bleu": eval_metric["bleu"]*100,
@@ -115,7 +123,8 @@ def baseline(model_type, src_lst, sum_lst, metric):
 
 def sum_w_cda(model_type, src_lst, sum_lst, metric):
     with open(f"./result/pred_w_cda_{model_type}", 'w') as pf, open(f"./result/gold_w_cda_{model_type}", 'w') as gf, open(f"./result/counterfactual_w_cda_{model_type}", 'w') as cf:
-        output_sum_lst = []
+        tokenized_output_sum_lst, tokenized_sum_lst = [], []
+    
         for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=len(src_lst)):
             prev_gold_sum = sum_lst[i-1]
             
@@ -141,8 +150,12 @@ def sum_w_cda(model_type, src_lst, sum_lst, metric):
             output_sum = clean_data_ko(output_sum)
             output_sum, sum = postprocess_text(output_sum, sum)
 
-            output_sum_lst.append(output_sum)
-            metric.add_batch(predictions=[output_sum], references=[sum])
+            tokenized_output_sum = ' '.join(tokenizer.tokenize(output_sum))
+            tokenized_sum = ' '.join(tokenizer.tokenize(sum))
+
+            tokenized_output_sum_lst.append(tokenized_output_sum)
+            tokenized_sum_lst.append(tokenized_sum)
+            metric.add_batch(predictions=[tokenized_output_sum], references=[tokenized_sum])
             try:
                 eval_metric = metric.compute()
             except ZeroDivisionError as e:
@@ -165,7 +178,7 @@ def sum_w_cda(model_type, src_lst, sum_lst, metric):
             gf.write(f"{sum}\n")
             cf.write(f"{counterfactual_sum}\n")
 
-    metric.add_batch(predictions=output_sum_lst, references=sum_lst)
+    metric.add_batch(predictions=tokenized_output_sum_lst, references=tokenized_sum_lst)
     eval_metric = metric.compute()
     print({
         "FINAL // bleu": eval_metric["bleu"]*100,
