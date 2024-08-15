@@ -1,6 +1,9 @@
 import evaluate
+from transformers import AutoTokenizer
 from tqdm import tqdm
+
 metric = evaluate.combine(["bleu", "rouge", "meteor"])
+tokenizer = AutoTokenizer.from_pretrained("klue/roberta-base")
 
 file_path = "result_gpt4o-mini"
 
@@ -9,9 +12,9 @@ with open(file_path, 'r') as f:
     sum_lst, output_sum_lst = [], []
     for line in tqdm(lines, total=len(lines)):
         if "Output summary: " in line[:16]:
-            output_sum_lst.append(line)
+            output_sum_lst.append(' '.join(tokenizer.tokenize(line.split("Output summary:")[-1].strip())))
         if "Gold Output summary:" in line:
-            sum_lst.append(line)
+            sum_lst.append(' '.join(tokenizer.tokenize(line.split("Gold Output summary:")[-1].strip())))
     
 metric.add_batch(predictions=output_sum_lst, references=sum_lst)
 eval_metric = metric.compute()
