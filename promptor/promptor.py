@@ -109,8 +109,7 @@ class ChatGPTPromptor(PromptorInterface):
 
     def do_llm(self, instruction):
         messages = [
-            {"role": "system", 
-            "content": "You are a helpful assistant."},
+            {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": instruction}
             
         ]

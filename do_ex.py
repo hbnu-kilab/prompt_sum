@@ -15,7 +15,7 @@ tokenizer = AutoTokenizer.from_pretrained("klue/roberta-base")
 ROOT_DIR = "/kilab/data/"
 
 data_type = "law"
-model_type = "gpt4o-mini"
+model_type = "gpt-4o-mini"
 do_cda = False
 """
 rtzr/ko-gemma-2-9b-it
@@ -56,8 +56,8 @@ if model_type == "gemma2":
 elif model_type == "exaone":
     model_id = "LGAI-EXAONE/EXAONE-3.0-7.8B-Instruct"
     promptor = Promptor(ExaonePromptor, model_id)
-elif model_type in ["gpt4o-mini"]:
-    model_id = "gpt4o-mini"
+elif model_type in ["gpt-4o-mini", "gpt-4-turbo"]:
+    model_id = model_type
     promptor = Promptor(ChatGPTPromptor, model_id)
 
 def baseline(model_type, src_lst, sum_lst, metric):

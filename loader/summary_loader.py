@@ -64,3 +64,22 @@ class SummarySBSCLoader(DataLoaderInterface):
                     sum_lst.append(ab_summary)
                 
         return src_lst, sum_lst
+
+class SummaryETRILoader(DataLoaderInterface):
+    def __init__(self) -> None:
+        super().__init__()
+    
+    def load(json_lst):
+        ex_sent_lst = []
+
+        for json_doc in tqdm(json_lst, total=len(json_lst), desc="load json"):
+            dial_dict = {dial["sentence_id"]: dial for dial in json_doc["dialogue"]}
+            
+            total_ex_dials_lst = []
+            for total in json_doc["total_summary"]:
+                extracted_dial_lst = [dial_dict[ids] for ids in total["total_sentence_ids"]]
+                total_ex_dials_lst.append(extracted_dial_lst)
+            
+            ex_sent_lst.append(total_ex_dials_lst)
+        
+        return ex_sent_lst
