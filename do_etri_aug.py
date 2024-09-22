@@ -73,12 +73,12 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-rd", "--root_dir", default="/kilab/data/etri/summarization/ko", dest="root_dir", action="store") 
+    parser.add_argument("-rd", "--root_dir", default="/kilab/data/etri/summarization/ko", dest="root_dir") 
     parser.add_argument("-dt", "--data_types", nargs='+', dest="--data_types timbel datamaker-2023-all", type=str) 
-    parser.add_argument("-d", "--data_dir", default="summarization/ko", dest="data_dir", action="store")
-    parser.add_argument("-s", "--save_dir", default="./result/etri", dest="data_dir", action="store") 
+    parser.add_argument("-d", "--data_dir", default="summarization/ko", dest="data_dir")
+    parser.add_argument("-s", "--save_dir", default="./result/etri", dest="data_dir") 
     parser.add_argument("-m", "--model_type", default="gpt-4o-mini", dest="model_type: \
-                                [gpt-4o-mini, gpt-4-turbo, gemma2, exaone]", action="store")
+                                [gpt-4o-mini, gpt-4-turbo, gemma2, exaone]")
     # parser.add_argument("-cda", "--do_cda", dest="do_cda", action="store_true")
     args = parser.parse_args()
 
