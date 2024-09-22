@@ -44,7 +44,7 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
 
             title, file_ext = os.path.splitext(d_dir.split('/')[-1])
             for exts in ext_lst:
-                new_ext_dict = {'입력 문장에 치환 가능 명사 <s> 표기':[],
+                new_ext_dict = {'입력 문장에 치환 가능 명사 <s></s> 표기':[],
                                 '문장 구조 변경': [],
                                 '구어체 변형': [],
                                 '어순 변형': [],
@@ -103,7 +103,7 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
                         idx = aug_data["sentence_id"]-1
                         copy_ori["dialogue"][idx] = aug_data
 
-                    with open(f"{save_path/data_type}/{title}.{aug_type}{file_ext}") as of:
+                    with open(f"./{save_path/data_type}/{title}.{aug_type}{file_ext}", 'w') as of:
                         json.dump(copy_ori, of, indent=4, ensure_ascii=False)
     
 
