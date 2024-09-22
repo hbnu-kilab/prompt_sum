@@ -44,6 +44,28 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
 
             title, file_ext = os.path.splitext(d_dir.split('/')[-1])
             for exts in ext_lst:
+                new_ext_dict = {'동의어 가능 모든 단수 명사 문장 안에 표시':[],
+                                '문장 구조 변경': [],
+                                '구어체 변형': [],
+                                '어순 변형': [],
+                                '감정 강조': [],
+                                '부정 표현 추가': [],
+                                '질문형으로 변형': [],
+                                '감정 추가': [],
+                                '디테일 추가': [],
+                                '상반된 상황 표현': [],
+                                '피동형 사용': [],
+                                '무작위성 도입': [],
+                                '비유적 표현 추가': [],
+                                '반어법 사용': [],
+                                '주어를 강조': [],
+                                '상황 설명 추가': [],
+                                '시제 변경': [],
+                                '복합문으로 변형': [],
+                                '간결한 표현으로 축약': [],
+                                '강조 표현 사용': [],
+                                '유머 추가': [],
+                                '청중에게 질문하는 방식': []}
                 for ext in exts:
                     instruction = mk_inst_etri_augmentation(ext["sentence"])
                     
@@ -68,10 +90,18 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
                                 aug_data = aug_data[1].strip()
                         
                             ext["sentence"] = aug_data
-                            copy_ori["dialogue"][i] = ext
+                            if aug_type in new_ext_dict:
+                                new_ext_dict[aug_type].append(ext)
+                            else:
+                                print(f"ERR, key not in dictionary. AUG_TYPE: {aug_type}, AUG_DATA: {aug_data}")
 
-                        with open(f"{save_path/data_type}/{title}.{aug_type}{file_ext}") as of:
-                            json.dump(copy_ori, of, indent=4, ensure_ascii=False)
+                # save augmented data
+                for aug_type, v in new_ext_dict.items():
+                    idx = v["sentence_id"]-1
+                    copy_ori["dialogue"][idx] = v
+
+                    with open(f"{save_path/data_type}/{title}.{aug_type}{file_ext}") as of:
+                        json.dump(copy_ori, of, indent=4, ensure_ascii=False)
     
 
 def main():
