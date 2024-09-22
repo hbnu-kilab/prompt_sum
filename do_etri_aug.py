@@ -1,3 +1,4 @@
+import os
 from tqdm import tqdm
 from pathlib import Path
 from loader import DataLoader, JsonInDirLoader, SummaryLoader, SummaryETRILoader
@@ -41,7 +42,7 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
         for i, (d_dir, ori, ext_lst) in tqdm(enumerate(zip(data_dir_list, json_lst, ex_sent_lst)), total=len(data_dir_list)):
             copy_ori = deepcopy(ori)
 
-            title = d_dir.split('/')[-1]
+            title, file_ext = os.path.splitext(d_dir.split('/')[-1])
             for exts in ext_lst:
                 for ext in exts:
                     instruction = mk_inst_etri_augmentation(ext["sentence"])
@@ -69,7 +70,7 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
                             ext["sentence"] = aug_data
                             copy_ori["dialogue"][i] = ext
 
-                        with open(f"{save_path/data_type}/{title}.{aug_type}.json") as of:
+                        with open(f"{save_path/data_type}/{title}.{aug_type}{file_ext}") as of:
                             json.dump(copy_ori, of, indent=4, ensure_ascii=False)
     
 
