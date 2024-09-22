@@ -78,7 +78,10 @@ class SummaryETRILoader(DataLoaderInterface):
             
             total_ex_dials_lst = []
             for total in json_doc["total_summary"]:
-                extracted_dial_lst = [dial_dict[ids] for ids in total["total_sentence_ids"]]
+                if "speaker_sentence_ids" in total: total_key = "speaker_sentence_ids"
+                elif "total_sentence_ids" in total: total_key = "total_sentence_ids"
+                else: assert "not in key"
+                extracted_dial_lst = [dial_dict[ids] for ids in total[total_key]]
                 total_ex_dials_lst.append(extracted_dial_lst)
             
             ex_sent_lst.append(total_ex_dials_lst)
