@@ -74,7 +74,7 @@ def mk_inst_etri_augmentation(sent):
 입력 문장: {sent}
 
 <augmentation type>
-[입력 문장에 치환 가능 명사 <s></s> 표기]
+[입력 문장에 치환 가능 명사 <>로 감싸기]
 [문장 구조 변경]
 [구어체 변형]
 [어순 변형]
