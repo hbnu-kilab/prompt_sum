@@ -67,7 +67,6 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
                                 '유머 추가': [],
                                 '청중에게 질문하는 방식': []}
                 for ext in tqdm(exts, total=len(exts), desc="Extracted sentence"):
-                    copy_ext = deepcopy(ext)
                     ex_sent = ext["sentence"]
                     instruction = mk_inst_etri_augmentation(ex_sent)
                     
@@ -78,6 +77,7 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
                     print(f"Augmented data: {aug_data}")
 
                     for a_d in aug_data.split('\n'):
+                        copy_ext = deepcopy(ext)
                         a_d = a_d.strip()
                         if len(a_d) == 0: continue 
 
