@@ -63,13 +63,17 @@ def mk_inst_for_counterfactual_summary_en(sent):
 #                 [Counterfactual Summary]: ".split())
 
 def mk_inst_etri_augmentation(sent):
-    return f"""주어진 입력 문장을 아래 22가지 변형 유형에 따라 변형해줘.
-의미가 크게 벗어나선 안돼.
-[변형 유형] 이런 형태로 주어지는데, 공백이나 추가 줄바꿈 없이 대괄호 이어서 바로 작성해줘.
-입력 문장은 다시 말할 필요 없고, 순서 번호 안 써도 돼.
+    return f"""주어진 입력 문장을 아래 22가지 변형 유형(augmentation type)에 따라 변형해줘.
+<order>:
+1. 의미가 크게 벗어나선 안됩니다.
+2. [변형 유형] 이 주워집니다.
+3. [변형 유형] <생성한 문장> 과 같이 공백이나 추가 줄바꿈 없이 대괄호 이어서 바로 작성해야 합니다.
+4. 입력 문장은 다시 말할 필요 없고, 순서 번호 안 써도 됩니다.
 
+<format>:
 입력 문장: {sent}
 
+<augmentation type>
 [동의어 가능 모든 단수 명사 문장 안에 표시] <s>단어</s>
 [문장 구조 변경]
 [구어체 변형]
