@@ -44,7 +44,7 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
 
             title, file_ext = os.path.splitext(d_dir.split('/')[-1])
             for exts in ext_lst:
-                new_ext_dict = {'동의어로 바꿀 수 있는 명사를 입력 문장 안에 <s></s>로 표기하여 출력':[],
+                new_ext_dict = {'문장 안 동의어 <s> 표기':[],
                                 '문장 구조 변경': [],
                                 '구어체 변형': [],
                                 '어순 변형': [],

@@ -74,7 +74,7 @@ def mk_inst_etri_augmentation(sent):
 입력 문장: {sent}
 
 <augmentation type>
-[동의어로 바꿀 수 있는 명사를 입력 문장 안에 <s></s>로 표기하여 출력]
+[문장 안 동의어 <s> 표기]
 [문장 구조 변경]
 [구어체 변형]
 [어순 변형]
