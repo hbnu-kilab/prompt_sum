@@ -10,11 +10,11 @@ import json
 from copy import deepcopy
 
 
-def load_data(root_dir, data_dir, data_type):
+def load_data(data_dir):
     # SBSC data
     data_loader = DataLoader(JsonInDirLoader, "json")
     sum_loader = SummaryLoader(SummaryETRILoader)
-    data_dir_list = data_loader.get_listdir(root_dir, data_dir)
+    data_dir_list = data_loader.get_listdir(data_dir, '')
     json_lst = list(data_loader.load(data_dir_list))
     ex_sent_lst = sum_loader.load(json_lst)
 
@@ -67,14 +67,14 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
                         copy_ori["dialogue"][i] = ext
 
             title = d_dir.split('/')[-1]
-            with open(f"{save_path/data_type}/{aug_type}.{title}.json") as of:
+            with open(f"{save_path/data_type}/{title}.{aug_type}.json") as of:
                 json.dump(copy_ori, of, indent=4, ensure_ascii=False)
     
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-rd", "--root_dir", default="/kilab/data/", dest="root_dir", action="store") 
-    parser.add_argument("-dt", "--data_types", nargs='+', dest="--data_types timbel datamaker", type="str") 
+    parser.add_argument("-rd", "--root_dir", default="/kilab/data/etri/summarization/ko", dest="root_dir", action="store") 
+    parser.add_argument("-dt", "--data_types", nargs='+', dest="--data_types timbel datamaker-2023-all", type="str") 
     parser.add_argument("-d", "--data_dir", dest="data_dir", action="store")
     parser.add_argument("-s", "--save_dir", default="./result/etri", dest="data_dir", action="store") 
     parser.add_argument("-m", "--model_type", default="gpt-4o-mini", dest="model_type: \
@@ -85,7 +85,7 @@ def main():
     promptor = load_mode(args)
 
     for data_type in args.data_types:
-        data_path = Path(args.root_dir) / args.data_dir /data_type
+        data_path = Path(args.root_dir) / args.data_dir / data_type / "train"
         data_dir_list, json_lst, ex_sent_lst = load_data(data_path)
 
         aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type)
