@@ -44,7 +44,7 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
 
             title, file_ext = os.path.splitext(d_dir.split('/')[-1])
             for exts in ext_lst:
-                new_ext_dict = {'입력 문장에 치환 가능 명사 <>로 감싸기':[],
+                new_ext_dict = {'입력 문장에 치환 가능 명사만 <>로 감싸기':[],
                                 '문장 구조 변경': [],
                                 '구어체 변형': [],
                                 '어순 변형': [],
