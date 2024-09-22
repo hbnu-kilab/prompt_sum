@@ -44,7 +44,7 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
 
             title, file_ext = os.path.splitext(d_dir.split('/')[-1])
             for exts in ext_lst:
-                new_ext_dict = {'동의어 가능 모든 단수 명사 문장 안에 표시':[],
+                new_ext_dict = {'동의어 대체 가능 명사를 문장 안에 표시':[],
                                 '문장 구조 변경': [],
                                 '구어체 변형': [],
                                 '어순 변형': [],
