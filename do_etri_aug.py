@@ -73,8 +73,9 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
                     aug_data = promptor.do_llm(instruction)
                     # output_sum = clean_data_ko(aug_data)
 
-                    print(f"Input text: {ex_sent}")
-                    print(f"Augmented data: {aug_data}")
+                    print(f"### FILE NAME: {title}")
+                    print(f"Input text: {ex_sent}\n")
+                    print(f"Augmented data: {aug_data}\n")
 
                     for a_d in aug_data.split('\n'):
                         copy_ext = deepcopy(ext)
