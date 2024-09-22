@@ -66,7 +66,7 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
                                 '강조 표현 사용': [],
                                 '유머 추가': [],
                                 '청중에게 질문하는 방식': []}
-                for ext in tqdm(exts, total=len(exts), desc=f"Ex sentence: {title}"):
+                for ext in tqdm(exts, total=len(exts), desc="Extracted sentence"):
                     ex_sent = ext["sentence"]
                     instruction = mk_inst_etri_augmentation(ex_sent)
                     
