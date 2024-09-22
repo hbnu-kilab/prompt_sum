@@ -53,6 +53,7 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
 
                     for a_d in aug_data.split('\n'):
                         a_d = a_d.strip()
+                        if len(a_d) == 0: continue 
 
                         if a_d[0] == '[':
                             aug_data = a_d.split(']')
@@ -62,7 +63,7 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
                             if len(aug_data[1:]) > 1:
                                 aug_data = " ".join(aug_data[1:])
                             else:
-                                aug_data = aug_data[1]
+                                aug_data = aug_data[1].strip()
                         
                             ext["sentence"] = aug_data
                             copy_ori["dialogue"][i] = ext
