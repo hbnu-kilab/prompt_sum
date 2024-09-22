@@ -41,6 +41,7 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
         for i, (d_dir, ori, ext_lst) in tqdm(enumerate(zip(data_dir_list, json_lst, ex_sent_lst)), total=len(data_dir_list)):
             copy_ori = deepcopy(ori)
 
+            title = d_dir.split('/')[-1]
             for exts in ext_lst:
                 for ext in exts:
                     instruction = mk_inst_etri_augmentation(ext["sentence"])
@@ -68,9 +69,8 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
                             ext["sentence"] = aug_data
                             copy_ori["dialogue"][i] = ext
 
-            title = d_dir.split('/')[-1]
-            with open(f"{save_path/data_type}/{title}.{aug_type}.json") as of:
-                json.dump(copy_ori, of, indent=4, ensure_ascii=False)
+                        with open(f"{save_path/data_type}/{title}.{aug_type}.json") as of:
+                            json.dump(copy_ori, of, indent=4, ensure_ascii=False)
     
 
 def main():
