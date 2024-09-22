@@ -103,6 +103,8 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
                         idx = aug_data["sentence_id"]-1
                         copy_ori["dialogue"][idx] = aug_data
 
+                    if aug_type == "입력 문장에 치환 가능 명사만 <>로 감싸기":
+                        aug_type = "동의어표시"
                     with open(f"./{save_path/data_type}/{title}.{aug_type}{file_ext}", 'w') as of:
                         json.dump(copy_ori, of, indent=4, ensure_ascii=False)
     
@@ -128,3 +130,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    # python do_etri_aug.py -dt timbel datamaker-2023-all --model_type gpt-4o-mini
