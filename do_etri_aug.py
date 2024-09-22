@@ -67,6 +67,7 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
                                 '유머 추가': [],
                                 '청중에게 질문하는 방식': []}
                 for ext in tqdm(exts, total=len(exts), desc="Extracted sentence"):
+                    copy_ext = deepcopy(ext)
                     ex_sent = ext["sentence"]
                     instruction = mk_inst_etri_augmentation(ex_sent)
                     
@@ -90,16 +91,17 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
                             else:
                                 aug_data = aug_data[1].strip()
                         
-                            ext["sentence"] = aug_data
+                            copy_ext["sentence"] = aug_data
                             if aug_type in new_ext_dict:
-                                new_ext_dict[aug_type].append(ext)
+                                new_ext_dict[aug_type].append(copy_ext)
                             else:
                                 print(f"ERR, key not in dictionary. AUG_TYPE: {aug_type}, AUG_DATA: {aug_data}")
 
                 # save augmented data
-                for aug_type, v in new_ext_dict.items():
-                    idx = v["sentence_id"]-1
-                    copy_ori["dialogue"][idx] = v
+                for aug_type, aug_data_lst in new_ext_dict.items():
+                    for aug_data in aug_data_lst:
+                        idx = aug_data["sentence_id"]-1
+                        copy_ori["dialogue"][idx] = aug_data
 
                     with open(f"{save_path/data_type}/{title}.{aug_type}{file_ext}") as of:
                         json.dump(copy_ori, of, indent=4, ensure_ascii=False)
