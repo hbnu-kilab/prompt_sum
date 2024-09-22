@@ -41,30 +41,31 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
         for i, (d_dir, ori, ext_lst) in tqdm(enumerate(zip(data_dir_list, json_lst, ex_sent_lst)), total=len(data_dir_list)):
             copy_ori = deepcopy(ori)
 
-            for ext in ext_lst:
-                instruction = mk_inst_etri_augmentation(ext["sentence"])
-                
-                aug_data = promptor.do_llm(instruction)
-                # output_sum = clean_data_ko(aug_data)
-
-                print(f"Input text: {instruction}")
-                print(f"Augmented data: {aug_data}")
-
-                for a_d in aug_data.split('\n'):
-                    a_d = a_d.strip()
-
-                    if a_d[0] == '[':
-                        aug_data = a_d.split(']')
-
-                        aug_type = aug_data[0].replace('[', '')
-
-                        if len(aug_data[1:]) > 1:
-                            aug_data = " ".join(aug_data[1:])
-                        else:
-                            aug_data = aug_data[1]
+            for exts in ext_lst:
+                for ext in exts:
+                    instruction = mk_inst_etri_augmentation(ext["sentence"])
                     
-                        ext["sentence"] = aug_data
-                        copy_ori["dialogue"][i] = ext
+                    aug_data = promptor.do_llm(instruction)
+                    # output_sum = clean_data_ko(aug_data)
+
+                    print(f"Input text: {instruction}")
+                    print(f"Augmented data: {aug_data}")
+
+                    for a_d in aug_data.split('\n'):
+                        a_d = a_d.strip()
+
+                        if a_d[0] == '[':
+                            aug_data = a_d.split(']')
+
+                            aug_type = aug_data[0].replace('[', '')
+
+                            if len(aug_data[1:]) > 1:
+                                aug_data = " ".join(aug_data[1:])
+                            else:
+                                aug_data = aug_data[1]
+                        
+                            ext["sentence"] = aug_data
+                            copy_ori["dialogue"][i] = ext
 
             title = d_dir.split('/')[-1]
             with open(f"{save_path/data_type}/{title}.{aug_type}.json") as of:
