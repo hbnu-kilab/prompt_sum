@@ -7,8 +7,8 @@ class SummaryLoader(DataLoaderInterface):
                  file_system: DataLoaderInterface):
         self.file_system = file_system
     
-    def load(self, json_lst, **kwargs):
-        return self.file_system.load(json_lst, **kwargs)
+    def load(self, json_lst, *args):
+        return self.file_system.load(json_lst, *args)
 
 class SummarySDSCLoader(DataLoaderInterface):
     def __init__():
