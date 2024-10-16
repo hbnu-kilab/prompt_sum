@@ -4,7 +4,7 @@ from pathlib import Path
 from loader import DataLoader, JsonInDirLoader, SummaryLoader, SummaryETRILoader
 from promptor import Promptor, ExaonePromptor, Gemma2Promptor, ChatGPTPromptor
 
-from promptor.mk_instruction import mk_inst_etri_augmentation
+from promptor.mk_instruction import mk_inst_etri_augmentation, mk_inst_exsum_wo_noise
 
 import argparse
 import json
@@ -17,9 +17,10 @@ def load_data(data_dir):
     sum_loader = SummaryLoader(SummaryETRILoader)
     data_dir_list = data_loader.get_listdir(data_dir, '')
     json_lst = list(data_loader.load(data_dir_list))
-    ex_sent_lst = sum_loader.load(json_lst)
+    ex_sent_lst = sum_loader.load(json_lst, "load_total_ex")   # first augmentation
+    dialog_lst = sum_loader.load(json_lst, "load_dialog")   # second augmentation
 
-    return data_dir_list, json_lst, ex_sent_lst
+    return data_dir_list, json_lst, ex_sent_lst, dialog_lst
 
 def load_mode(args):
     if args.model_type == "gemma2":
@@ -109,6 +110,36 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
                     with open(f"./{save_path/data_type}/{title}.{aug_type}{file_ext}", 'w') as of:
                         json.dump(copy_ori, of, indent=4, ensure_ascii=False)
     
+def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, dialog_lst, data_type):
+    # all text
+    # total extract sentence 
+    # LLM -> total extract sentence와 관련있는 sentence만 출력
+    # LLM의 결과와 total extract sentence랑 합쳐서 gen_all_text 생성
+    # gen_all_text -> total summary 저장
+
+    save_path = Path(args.save_dir)
+
+    with open(f"{save_path/data_type}.log", 'w') as pf:
+        for i, (d_dir, ori, dialog_dict) in tqdm(enumerate(zip(data_dir_list, json_lst, dialog_lst)), total=len(data_dir_list)):
+
+            title, file_ext = os.path.splitext(d_dir.split('/')[-1])
+            # make dialogue with sent_id
+            dialog_str = ' '.join([f'[{k}] {v}' for k, v in dialog_dict.items()])
+            instruction = mk_inst_exsum_wo_noise(dialog_str)
+                
+            aug_data = promptor.do_llm(instruction)
+            aug_dialog = aug_data.split('[').strip()
+            aug_dict = {aug_sent.split(']')[0]: aug_sent.split(']')[1].strip() for aug_sent in aug_dialog}
+            aug_lst = [{"sentence_id": k, "sentence": v} for k, v in aug_dict.items()]
+
+            ret_dict = {"dialog": aug_lst, "total_summary": ori["total_summary"]}
+
+
+            with open(f"./{save_path/data_type}/{title}.wo_noise{file_ext}", 'w') as of:
+                json.dump(ret_dict, of, indent=4, ensure_ascii=False)
+
+
+    pass
 
 def main():
     parser = argparse.ArgumentParser()
@@ -124,9 +155,10 @@ def main():
 
     for data_type in args.data_types:
         data_path = Path(args.root_dir) / args.data_dir / data_type / "train"
-        data_dir_list, json_lst, ex_sent_lst = load_data(data_path)
+        data_dir_list, json_lst, ex_sent_lst, dialog_lst = load_data(data_path)
 
         aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type)
+        aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, dialog_lst, data_type)
 
 
 if __name__ == "__main__":

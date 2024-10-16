@@ -96,3 +96,18 @@ def mk_inst_etri_augmentation(sent):
 [강조 표현 사용]
 [유머 추가]
 [청중에게 질문하는 방식]"""
+
+
+def mk_inst_exsum_wo_noise(sent, sum_ids):
+    return f"""주어진 입력 문장을 아래 <order>에 따라 결과를 생성해줘.
+<order>:
+1. 주어진 입력은 [num] sentence 가 연결된 meeting dialogue 입니다.
+2. 전체 회의에서 {sum_ids}의 문장이 extractive summary 입니다.
+3. 전체 dialogue의 문장들 중에서 extractive summary와 관련있는 문장들만 추리세요.
+4. 출력은 입력 구조와 동일하게 [num] sentence 가 연결된 형태로 생성합니다.
+5. 이때 관련있는 문장들과 extractive summary를 포함하여 문장 번호 순서대로 출력하세요.
+
+<format>:
+입력 문장: {sent}
+
+"""

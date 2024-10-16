@@ -35,80 +35,9 @@ def load_mode(args):
 
     return promptor
 
-def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type):
-    save_path = Path(args.save_dir)
+def do_eval_meeting_summary(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type):
+    pass
 
-    with open(f"{save_path/data_type}.log", 'w') as pf:
-        for i, (d_dir, ori, ext_lst) in tqdm(enumerate(zip(data_dir_list, json_lst, ex_sent_lst)), total=len(data_dir_list)):
-            copy_ori = deepcopy(ori)
-
-            title, file_ext = os.path.splitext(d_dir.split('/')[-1])
-            for exts in ext_lst:
-                new_ext_dict = {'입력 문장에 치환 가능 명사만 <>로 감싸기':[],
-                                '문장 구조 변경': [],
-                                '구어체 변형': [],
-                                '어순 변형': [],
-                                '감정 강조': [],
-                                '부정 표현 추가': [],
-                                '질문형으로 변형': [],
-                                '감정 추가': [],
-                                '디테일 추가': [],
-                                '상반된 상황 표현': [],
-                                '피동형 사용': [],
-                                '무작위성 도입': [],
-                                '비유적 표현 추가': [],
-                                '반어법 사용': [],
-                                '주어를 강조': [],
-                                '상황 설명 추가': [],
-                                '시제 변경': [],
-                                '복합문으로 변형': [],
-                                '간결한 표현으로 축약': [],
-                                '강조 표현 사용': [],
-                                '유머 추가': [],
-                                '청중에게 질문하는 방식': []}
-                for ext in tqdm(exts, total=len(exts), desc="Extracted sentence"):
-                    ex_sent = ext["sentence"]
-                    instruction = mk_inst_etri_augmentation(ex_sent)
-                    
-                    aug_data = promptor.do_llm(instruction)
-                    # output_sum = clean_data_ko(aug_data)
-
-                    print(f"### FILE NAME: {title}")
-                    print(f"Input text: {ex_sent}\n")
-                    print(f"Augmented data: {aug_data}\n")
-
-                    for a_d in aug_data.split('\n'):
-                        copy_ext = deepcopy(ext)
-                        a_d = a_d.strip()
-                        if len(a_d) == 0: continue 
-
-                        if a_d[0] == '[':
-                            aug_data = a_d.split(']')
-
-                            aug_type = aug_data[0].replace('[', '')
-
-                            if len(aug_data[1:]) > 1:
-                                aug_data = " ".join(aug_data[1:])
-                            else:
-                                aug_data = aug_data[1].strip()
-                        
-                            copy_ext["sentence"] = aug_data
-                            if aug_type in new_ext_dict:
-                                new_ext_dict[aug_type].append(copy_ext)
-                            else:
-                                print(f"ERR, key not in dictionary. AUG_TYPE: {aug_type}, AUG_DATA: {aug_data}")
-
-                # save augmented data
-                for aug_type, aug_data_lst in new_ext_dict.items():
-                    for aug_data in aug_data_lst:
-                        idx = aug_data["sentence_id"]-1
-                        copy_ori["dialogue"][idx] = aug_data
-
-                    if aug_type == "입력 문장에 치환 가능 명사만 <>로 감싸기":
-                        aug_type = "동의어표시"
-                    with open(f"./{save_path/data_type}/{title}.{aug_type}{file_ext}", 'w') as of:
-                        json.dump(copy_ori, of, indent=4, ensure_ascii=False)
-    
 
 def main():
     parser = argparse.ArgumentParser()
@@ -123,10 +52,10 @@ def main():
     promptor = load_mode(args)
 
     for data_type in args.data_types:
-        data_path = Path(args.root_dir) / args.data_dir / data_type / "train"
+        data_path = Path(args.root_dir) / args.data_dir / data_type / "test"
         data_dir_list, json_lst, ex_sent_lst = load_data(data_path)
 
-        aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type)
+        do_eval_meeting_summary(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type)
 
 
 if __name__ == "__main__":

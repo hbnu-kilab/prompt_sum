@@ -1,4 +1,5 @@
 from tqdm import tqdm
+
 from .data_loader_interface import DataLoaderInterface
 
 class SummaryLoader(DataLoaderInterface):
@@ -70,7 +71,7 @@ class SummaryETRILoader(DataLoaderInterface):
     def __init__(self) -> None:
         super().__init__()
     
-    def load(json_lst):
+    def load_total_ex(json_lst):
         ex_sent_lst = []
 
         for json_doc in tqdm(json_lst, total=len(json_lst), desc="load json"):
@@ -85,5 +86,35 @@ class SummaryETRILoader(DataLoaderInterface):
                 total_ex_dials_lst.append(extracted_dial_lst)
             
             ex_sent_lst.append(total_ex_dials_lst)
+        
+        return ex_sent_lst
+
+    def load_dialog(self, json_lst):
+        all_dialog = []
+
+        for json_doc in tqdm(json_lst, total=len(json_lst), desc="load json dialogue"):
+            dial_dict = {dial["sentence_id"]: dial for dial in json_doc["dialogue"]}
+            all_dialog.append(dial_dict)
+
+        return all_dialog            
+
+
+    def load(self, json_lst, **kwargs):
+        return getattr(self.load_total_ex, kwargs)(json_lst)
+
+        # ex_sent_lst = []
+
+        # for json_doc in tqdm(json_lst, total=len(json_lst), desc="load json"):
+        #     dial_dict = {dial["sentence_id"]: dial for dial in json_doc["dialogue"]}
+            
+        #     total_ex_dials_lst = []
+        #     for total in json_doc["total_summary"]:
+        #         if "speaker_sentence_ids" in total: total_key = "speaker_sentence_ids"
+        #         elif "total_sentence_ids" in total: total_key = "total_sentence_ids"
+        #         else: assert "not in key"
+        #         extracted_dial_lst = [dial_dict[ids] for ids in total[total_key]]
+        #         total_ex_dials_lst.append(extracted_dial_lst)
+            
+        #     ex_sent_lst.append(total_ex_dials_lst)
         
         return ex_sent_lst
