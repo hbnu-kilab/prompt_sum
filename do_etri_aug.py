@@ -30,7 +30,7 @@ def load_mode(args):
     elif args.model_type == "exaone":
         model_id = "LGAI-EXAONE/EXAONE-3.0-7.8B-Instruct"
         promptor = Promptor(ExaonePromptor, model_id)
-    elif args.model_type in ["gpt-4o-mini", "gpt-4-turbo"]:
+    elif args.model_type in ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"]:
         model_id = args.model_type
         promptor = Promptor(ChatGPTPromptor, model_id)
 
