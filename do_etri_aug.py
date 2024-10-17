@@ -125,7 +125,8 @@ def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst
             title, file_ext = os.path.splitext(d_dir.split('/')[-1])
             # make dialogue with sent_id
             dialog_str = ' '.join([f'[{k}] {v.get("sentence")}' for k, v in dialog_dict.items()])
-            instruction = mk_inst_exsum_wo_noise(dialog_str)
+            ex_ids = [ex["sentence_id"] for ex in ext_lst[0]]
+            instruction = mk_inst_exsum_wo_noise(dialog_str, ex_ids)
                 
             aug_data = promptor.do_llm(instruction)
             aug_dialog = aug_data.split('[').strip()
