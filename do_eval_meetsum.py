@@ -152,9 +152,11 @@ def abstractive_summary(json_lst, aug_ids_lst, ex_ids_lst):
     for i, (ori, aug_ids, ex_ids) in tqdm(enumerate(zip(json_lst, aug_ids_lst, ex_ids_lst)), total=len(json_lst)):
         # make dialogue with sent_id
         dialogue = ori['dialogue']
+        dialogue_dict = {v['sentence_id']: v for v in dialogue}
         total_asummary = ori["total_summary"][0]["total_asummary"]
 
-        ex_dial_str = ' '.join([dialogue[ex_id-1].get("sentence") for ex_id in ex_ids])
+        ex_dial_str = ' '.join([dialogue_dict[ex_id].get("sentence").replace('n/', '').replace('o/', '').strip()
+                                 for ex_id in ex_ids])
 
         src_lst.append(ex_dial_str)
         sum_lst.append(total_asummary)
@@ -186,7 +188,7 @@ def main():
 
         src_lst, sum_lst = abstractive_summary(json_lst, aug_ids_lst, ex_ids_lst)
 
-        baseline(args.model_type, src_lst, sum_lst, metric)
+        baseline(args.model_type, src_lst, sum_lst, metric, promptor)
 
 if __name__ == "__main__":
     main()
