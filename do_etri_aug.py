@@ -121,7 +121,6 @@ def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst
 
     with open(f"{save_path/data_type}.log", 'w') as pf:
         for i, (d_dir, ori, ext_lst, dialog_dict) in tqdm(enumerate(zip(data_dir_list, json_lst, ex_sent_lst, dialog_lst)), total=len(data_dir_list)):
-
             title, file_ext = os.path.splitext(d_dir.split('/')[-1])
             # make dialogue with sent_id
             dialog_str = ' '.join([f'[{k}] {v.get("sentence")}' for k, v in dialog_dict.items()])
@@ -129,11 +128,21 @@ def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst
             instruction = mk_inst_exsum_wo_noise(dialog_str, ex_ids)
                 
             aug_data = promptor.do_llm(instruction)
-            aug_dialog = aug_data.split('[').strip()
-            aug_dict = {aug_sent.split(']')[0]: aug_sent.split(']')[1].strip() for aug_sent in aug_dialog}
-            aug_lst = [{"sentence_id": k, "sentence": v} for k, v in aug_dict.items()]
 
-            ret_dict = {"dialog": aug_lst, "total_summary": ori["total_summary"]}
+            aug_ids = eval(aug_data.split(': ')[-1].strip())
+            merged_ids = sorted(set(aug_ids + ex_ids))
+
+            merged_id_dict = {v:k for k, v in enumerate(merged_ids)}
+            trans_ex_ids = [merged_id_dict[ex_id] for ex_id in ex_ids]
+            ori["total_summary"]["total_sentence_ids"] = trans_ex_ids
+
+            # aug_dial_lst = [{dialog_dict[mid]} for mid in merged_ids]
+            aug_dial_lst = []
+            for mid in merged_ids:
+                dialog_dict[mid]['sentence_id'] = merged_id_dict[mid]
+                aug_dial_lst.append(dialog_dict[mid])
+
+            ret_dict = {"dialog": aug_dial_lst, "total_summary": ori["total_summary"], 'metadata': ori['metadata']}
 
 
             with open(f"./{save_path/data_type}/{title}.wo_noise{file_ext}", 'w') as of:
