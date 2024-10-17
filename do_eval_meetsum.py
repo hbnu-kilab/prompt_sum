@@ -49,7 +49,8 @@ def do_eval_meeting_summary(args, promptor, json_lst):
         total_topic = total_summary['total_topic']
         ex_ids = total_summary['total_sentence_ids'] if 'total_sentence_ids' in total_summary else total_summary['speaker_sentence_ids']
 
-        instruction = mk_inst_exsum_meetsum(dialog_str, total_topic)
+        topic_cot = promptor.do_llm(f"Let's think step by step for the {total_topic}, 결과는 한국어로 출력해줘.")
+        instruction = mk_inst_exsum_meetsum(dialog_str, topic_cot)
             
         aug_data = promptor.do_llm(instruction)
 
