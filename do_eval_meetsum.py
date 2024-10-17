@@ -81,7 +81,8 @@ def do_eval_meeting_summary(args, promptor, json_lst):
         new_dialogue = []
         for a_id in range(0, len(aug_ids), step):
             # aug_sent_range = range(aug_ids[a_id], aug_ids[a_id+step])
-            new_dialogue += dialogue[aug_ids[a_id]:aug_ids[a_id+step]]
+            end_id = a_id+step
+            new_dialogue += dialogue[aug_ids[a_id]:aug_ids[end_id if end_id < len(dialogue)-1 else len(dialogue)-1]]
 
         new_dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in new_dialogue])
 
