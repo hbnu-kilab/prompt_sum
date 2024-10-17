@@ -129,9 +129,9 @@ def main():
 
     for data_type in args.data_types:
         data_path = Path(args.root_dir) / args.data_dir / data_type / "test"
-        data_dir_list, json_lst, ex_sent_lst = load_data(data_path)
+        data_dir_list, json_lst  = load_data(data_path)
 
-        do_eval_meeting_summary(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type)
+        do_eval_meeting_summary(args, promptor, json_lst)
 
 
 if __name__ == "__main__":
