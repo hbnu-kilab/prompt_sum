@@ -178,7 +178,8 @@ def main():
     promptor = load_model(args)
 
     metric = evaluate.combine(["bleu", "rouge", "meteor"])
-    tokenizer = AutoTokenizer.from_pretrained("klue/roberta-base")
+    # tokenizer = AutoTokenizer.from_pretrained("klue/roberta-base")
+    sum_range = "200~400"
 
     for data_type in args.data_types:
         data_path = Path(args.root_dir) / args.data_dir / data_type / "test"
@@ -188,7 +189,7 @@ def main():
 
         src_lst, sum_lst = abstractive_summary(json_lst, aug_ids_lst, ex_ids_lst)
 
-        baseline(args.model_type, src_lst, sum_lst, metric, promptor)
+        baseline(args.model_type, src_lst, sum_lst, sum_range, metric, promptor)
 
 if __name__ == "__main__":
     main()

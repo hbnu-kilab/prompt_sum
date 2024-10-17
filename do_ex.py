@@ -65,14 +65,14 @@ def init_model():
 
     return promptor
 
-def baseline(model_type, src_lst, sum_lst, metric, promptor):
+def baseline(model_type, src_lst, sum_lst, sum_range, metric, promptor):
     with open(f"./result/pred_{model_type}", 'w') as pf, open(f"./result/gold_{model_type}", 'w') as gf:
         tokenized_output_sum_lst, tokenized_sum_lst = [], []
 
         for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=len(src_lst)):
             prev_gold_sum = sum_lst[i-1]
             if nshot == 0:
-                instruction = mk_inst_for_summary(src)
+                instruction = mk_inst_for_summary(src, sum_range)
             elif nshot == 1:
                 instruction = mk_inst_for_summary_w_1shot(src, prev_gold_sum)
             
@@ -197,7 +197,8 @@ def sum_w_cda(model_type, src_lst, sum_lst, metric, promptor):
 # src_lst, sum_lst = init_data()
 # promptor = init_model()
 
+sum_range="30~200"
 # if do_cda:
 #     sum_w_cda(model_type, src_lst, sum_lst, metric, promptor)
 # else:
-#     baseline(model_type, src_lst, sum_lst, metric, promptor)
+#     baseline(model_type, src_lst, sum_lst, sum_range, metric, promptor)
