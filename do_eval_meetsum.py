@@ -154,7 +154,7 @@ def abstractive_summary(json_lst, aug_ids_lst, ex_ids_lst):
         dialogue = ori['dialogue']
         total_asummary = ori["total_summary"][0]["total_asummary"]
 
-        ex_dial_str = ' '.join([dialogue[ex_id].get("sentence") for ex_id in ex_ids])
+        ex_dial_str = ' '.join([dialogue[ex_id-1].get("sentence") for ex_id in ex_ids])
 
         src_lst.append(ex_dial_str)
         sum_lst.append(total_asummary)
