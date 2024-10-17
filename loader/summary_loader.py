@@ -99,8 +99,8 @@ class SummaryETRILoader(DataLoaderInterface):
         return all_dialog            
 
 
-    def load(self, json_lst, **kwargs):
-        return getattr(self.load_total_ex, kwargs)(json_lst)
+    def load(self, json_lst, *args):
+        return getattr(self, args)(json_lst)
 
         # ex_sent_lst = []
 
