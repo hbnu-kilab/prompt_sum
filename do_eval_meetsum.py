@@ -36,17 +36,35 @@ def load_mode(args):
 
     return promptor
 
+
 def do_eval_meeting_summary(args, promptor, json_lst):
     for i, ori in tqdm(enumerate(json_lst), total=len(json_lst)):
         # make dialogue with sent_id
         dialog_str = ' '.join([f'[{k}] {v.get("sentence")}' for k, v in json_lst['dialogue'].items()])
+        
+        # gold data
         total_summary = json_lst['total_summary']
         total_topic = total_summary['total_topic']
+        ex_ids = total_summary['total_sentence_ids']
 
         instruction = mk_inst_exsum_meetsum(dialog_str, total_topic)
             
         aug_data = promptor.do_llm(instruction)
 
+        tmp_aug = aug_data.split(': ')[-1].strip()
+        try:
+            if tmp_aug[-1] == '.': tmp_aug = tmp_aug[:-1]
+            
+            if tmp_aug[0] == '[' and tmp_aug[-1] != ']': tmp_aug += ']'
+            elif tmp_aug[0] != '[' and tmp_aug[-1] == ']': tmp_aug = '[' + tmp_aug
+
+            aug_ids = eval(tmp_aug)
+        except:
+            print(aug_data)
+
+        if type(aug_ids) == tuple: aug_ids = list(aug_ids)
+        if 0 in aug_ids:
+            del aug_ids[aug_ids.index(0)]
 
 def main():
     parser = argparse.ArgumentParser()

@@ -119,6 +119,7 @@ def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst
 
     save_path = Path(args.save_dir)
     ori_sent_cnt, diff_sent_cnt = 0, 0
+    aug_id_err = 0
 
     with open(f"{save_path/data_type}.log", 'w') as pf:
         for i, (d_dir, ori, ext_lst, dialog_dict) in tqdm(enumerate(zip(data_dir_list, json_lst, ex_sent_lst, dialog_lst)), total=len(data_dir_list)):
@@ -126,7 +127,12 @@ def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst
             # make dialogue with sent_id
             ori_sent_cnt += len(dialog_dict)
             dialog_str = ' '.join([f'[{k}] {v.get("sentence")}' for k, v in dialog_dict.items()])
-            ex_ids = [ex["sentence_id"] for ex in ext_lst[0]]
+            try:
+                ex_ids = [ex["sentence_id"] for ex in ext_lst[0]]
+            except:
+                print(f"ERR: {ext_lst[0]}")
+                continue
+
             instruction = mk_inst_exsum_wo_noise(dialog_str, ex_ids)
                 
             aug_data = promptor.do_llm(instruction)
@@ -141,6 +147,8 @@ def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst
                 aug_ids = eval(tmp_aug)
             except:
                 print(aug_data)
+                aug_id_err += 1
+                continue
 
             if type(aug_ids) == tuple: aug_ids = list(aug_ids)
             if 0 in aug_ids:
@@ -176,6 +184,7 @@ def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst
 
 
     print(f"Num of no merged id in dialogue: {no_merged_id}")
+    print(f"Num of augmentation format error: {aug_id_err}")
     print(f"Reduction ratio: {diff_sent_cnt / ori_sent_cnt:.4f}")
 
 def main():
