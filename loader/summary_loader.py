@@ -1,3 +1,4 @@
+import sys
 from tqdm import tqdm
 
 from .data_loader_interface import DataLoaderInterface
@@ -7,8 +8,8 @@ class SummaryLoader(DataLoaderInterface):
                  file_system: DataLoaderInterface):
         self.file_system = file_system
     
-    def load(self, json_lst, *args):
-        return self.file_system.load(json_lst, *args)
+    def load(self, json_lst, **kwargs):
+        return self.file_system.load(json_lst, **kwargs)
 
 class SummarySDSCLoader(DataLoaderInterface):
     def __init__():
@@ -99,8 +100,15 @@ class SummaryETRILoader(DataLoaderInterface):
         return all_dialog            
 
 
-    def load(self, json_lst, *args):
-        return getattr(self, *args[0])(json_lst)
+    def load(self, json_lst, **kwargs):
+        try:
+            assert 'function_name' in kwargs, "'function_name' 키가 존재하지 않습니다"
+            f_name = kwargs["function_name"]
+        except AssertionError as e:
+            print(f"AssertionError 발생: {e}")
+            sys.exit(1)
+
+        return getattr(self, f_name)(json_lst)
 
         # ex_sent_lst = []
 

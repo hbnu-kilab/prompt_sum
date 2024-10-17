@@ -17,8 +17,8 @@ def load_data(data_dir):
     sum_loader = SummaryLoader(SummaryETRILoader)
     data_dir_list = data_loader.get_listdir(data_dir, '')
     json_lst = list(data_loader.load(data_dir_list))
-    ex_sent_lst = sum_loader.load(json_lst, "load_total_ex")   # first augmentation
-    dialog_lst = sum_loader.load(json_lst, "load_dialog")   # second augmentation
+    ex_sent_lst = sum_loader.load(json_lst, function_name="load_total_ex")   # first augmentation
+    dialog_lst = sum_loader.load(json_lst, function_name="load_dialog")   # second augmentation
 
     return data_dir_list, json_lst, ex_sent_lst, dialog_lst
 
