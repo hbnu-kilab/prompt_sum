@@ -145,9 +145,12 @@ def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst
 
             # aug_dial_lst = [{dialog_dict[mid]} for mid in merged_ids]
             aug_dial_lst = []
+            no_merged_id = 0
             for mid in merged_ids:
-                dialog_dict[mid]['sentence_id'] = merged_id_dict[mid]
-                aug_dial_lst.append(dialog_dict[mid])
+                if mid in dialog_dict:
+                    dialog_dict[mid]['sentence_id'] = merged_id_dict[mid]
+                    aug_dial_lst.append(dialog_dict[mid])
+                else: no_merged_id += 1
 
             ret_dict = {"dialog": aug_dial_lst, "total_summary": ori["total_summary"], 'metadata': ori['metadata']}
 
@@ -156,7 +159,7 @@ def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst
                 json.dump(ret_dict, of, indent=4, ensure_ascii=False)
 
 
-    pass
+    print(f"Num of no merged id in dialogue: {no_merged_id}")
 
 def main():
     parser = argparse.ArgumentParser()
