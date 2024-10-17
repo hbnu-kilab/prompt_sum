@@ -115,3 +115,19 @@ def mk_inst_exsum_wo_noise(sent, sum_ids):
 
 [결과 id 리스트]: 
 """
+
+def mk_inst_exsum_meetsum(sent, topic):
+    return f"""주어진 입력 문장을 아래 <order>에 따라 요약문을 생성해줘.
+<order>:
+1. 입력 문장은 [num] sentence 가 연결된 meeting dialogue 이다.
+2. extractive summary를 수행할 건데, 요약문의 주제가 되는 [Topic]이 줄거야, 주어진 [Topic]에 적합한 문장을 선별해줘.
+4. 인삿말이나 추임새, extractive summary와 관련 없는 문장들은 제외해.
+5. 선별된 문장의 id들만 출력하면 되며, 전체 문장의 20%를 넘지 않도록 해. 출력 형식은 다음 조건을 따르면 돼.
+6. 선별한 문장의 id를 다음과 같이 1, 2, ... 나열되는 형식으로 [결과 id 리스트]: 뒤에 출력해줘.
+
+<format>:
+[Topic]: {topic}
+[입력 문장]: {sent}
+
+[결과 id 리스트]: 
+"""

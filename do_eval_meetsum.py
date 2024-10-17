@@ -4,7 +4,7 @@ from pathlib import Path
 from loader import DataLoader, JsonInDirLoader, SummaryLoader, SummaryETRILoader
 from promptor import Promptor, ExaonePromptor, Gemma2Promptor, ChatGPTPromptor
 
-from promptor.mk_instruction import mk_inst_etri_augmentation
+from promptor.mk_instruction import mk_inst_exsum_meetsum
 
 import argparse
 import json
@@ -17,9 +17,10 @@ def load_data(data_dir):
     sum_loader = SummaryLoader(SummaryETRILoader)
     data_dir_list = data_loader.get_listdir(data_dir, '')
     json_lst = list(data_loader.load(data_dir_list))
-    ex_sent_lst = sum_loader.load(json_lst)
+    # ex_sent_lst = sum_loader.load(json_lst)
+    # dialog_lst = sum_loader.load(json_lst, function_name="load_dialog")   # second augmentation
 
-    return data_dir_list, json_lst, ex_sent_lst
+    return data_dir_list, json_lst
 
 def load_mode(args):
     if args.model_type == "gemma2":
@@ -35,8 +36,16 @@ def load_mode(args):
 
     return promptor
 
-def do_eval_meeting_summary(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type):
-    pass
+def do_eval_meeting_summary(args, promptor, json_lst):
+    for i, ori in tqdm(enumerate(json_lst), total=len(json_lst)):
+        # make dialogue with sent_id
+        dialog_str = ' '.join([f'[{k}] {v.get("sentence")}' for k, v in json_lst['dialogue'].items()])
+        total_summary = json_lst['total_summary']
+        total_topic = total_summary['total_topic']
+
+        instruction = mk_inst_exsum_meetsum(dialog_str, total_topic)
+            
+        aug_data = promptor.do_llm(instruction)
 
 
 def main():
