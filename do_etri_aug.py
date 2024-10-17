@@ -165,6 +165,7 @@ def main():
     parser.add_argument("-d", "--data_dir", default="summarization/ko", dest="data_dir")
     parser.add_argument("-s", "--save_dir", default="./result/etri", dest="save_dir") 
     parser.add_argument("-m", "--model_type", default="gpt-4o-mini", dest="model_type", help="model_type: [gpt-4o-mini, gpt-4-turbo, gemma2, exaone]")
+    parser.add_argument("-at", "--augmentation_type", default="style_transfer", dest="augmentation_type", help="augmentation_type: [style_transfer, filter_noise, all]")
     # parser.add_argument("-cda", "--do_cda", dest="do_cda", action="store_true")
     args = parser.parse_args()
 
@@ -174,8 +175,13 @@ def main():
         data_path = Path(args.root_dir) / args.data_dir / data_type / "train"
         data_dir_list, json_lst, ex_sent_lst, dialog_lst = load_data(data_path)
 
-        aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type)
-        aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst, dialog_lst, data_type)
+        if args.augmentation_type == "style_transfer":
+            aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type)
+        elif args.augmentation_type == "filter_noise":
+            aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst, dialog_lst, data_type)
+        elif args.augmentation_type == "all":
+            aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type)
+            aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst, dialog_lst, data_type)
 
 
 if __name__ == "__main__":
