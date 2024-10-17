@@ -120,14 +120,14 @@ def mk_inst_exsum_wo_noise(sent, sum_ids):
 # 3. 전체 회의 대화 내용을 대상으로 [Topic]에 따른 적합한 문장을 선별해주세요. 문장 최소 10 문장 이상 선별해야 합니다.
 # 5. 인삿말이나 추임새, extractive summary와 관련 없는 문장들은 제외하고, 요약에 도움이 되는 문장들만 선별해주세요.
 # 4. 선별된 문장의 id들만 출력하면 되며, 출력 형식은 다음 조건을 따르면 됩니다.
-def mk_inst_exsum_meetsum(sent, topic, dial_len):
+def mk_inst_exsum_meetsum(sent, topic, dial_len, num_ex_sent):
     return f"""주어진 입력 문장을 아래 <order>에 따라 [Topic]과 관련된 문장을 선별해줘.
 <order>:
 1. 입력 문장은 [num] sentence 와 같이 연결된 회의 대화 내용입니다. 입력은 총 {dial_len} 문장입니다.
 2. [Topic]이 주어지고, 주어진 [Topic]과 관련있는 문장을 모두 찾으시오.
 3. 전체 대화를 파악하여 [Topic]에 따른 적합한 문장을 선별해주세요. 전체 대화에서 골고루 선별해야 합니다.
-4. 20~30문장을 선별해줘.
-5. 선별한 문장의 id를 다음과 같이 [1, 2, ..., n] 나열되는 형식으로 [결과 id 리스트]: 뒤에 출력하세요.
+4. {num_ex_sent} ~ {num_ex_sent+10} 문장을 선별하고, 최소 10문장 이상 선별하시오.
+5. 선별한 문장의 id들만 출력하면 되며, 다음과 같이 [1, 2, ..., n] 나열되는 형식으로 [결과 id 리스트]: 뒤에 출력하세요.
 
 <format>:
 [Topic]: {topic}

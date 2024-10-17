@@ -71,7 +71,7 @@ def do_eval_meeting_summary(args, promptor, json_lst):
 
         topic_cot = promptor.do_llm(f"Let's think step by step for the {total_topic}, 결과는 한국어로 출력해줘.")
         topic_input = f'Topic: {total_topic}, Sub-topics: {topic_cot}, 이와 관련있는 문장을 모두 찾으시오.'
-        instruction = mk_inst_exsum_meetsum(dialog_str, topic_input, len(dialogue))
+        instruction = mk_inst_exsum_meetsum(dialog_str, topic_input, len(dialogue), int(len(dialogue)*0.3))
             
         aug_data = promptor.do_llm(instruction)
 
@@ -90,7 +90,7 @@ def do_eval_meeting_summary(args, promptor, json_lst):
 
         new_dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in new_dialogue])
 
-        instruction = mk_inst_exsum_meetsum(new_dialog_str, topic_input, new_dialog_str.count('['))
+        instruction = mk_inst_exsum_meetsum(new_dialog_str, topic_input, new_dialog_str.count('['), 20)
 
         aug_data = promptor.do_llm(instruction)
 
