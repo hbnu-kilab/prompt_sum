@@ -86,7 +86,7 @@ def do_eval_meeting_summary(args, promptor, json_lst):
 
         new_dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in new_dialogue])
 
-        instruction = mk_inst_exsum_meetsum(new_dialog_str, topic_input, len(new_dialog_str.count('[')))
+        instruction = mk_inst_exsum_meetsum(new_dialog_str, topic_input, new_dialog_str.count('['))
 
         aug_data = promptor.do_llm(instruction)
 
