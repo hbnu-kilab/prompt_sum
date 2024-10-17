@@ -23,7 +23,7 @@ def load_data(data_dir):
 
     return data_dir_list, json_lst
 
-def load_mode(args):
+def load_model(args):
     if args.model_type == "gemma2":
         model_id = "carrotter/ko-gemma-2b-it-sft"
         # model_id = "rtzr/ko-gemma-2-9b-it"
@@ -31,7 +31,7 @@ def load_mode(args):
     elif args.model_type == "exaone":
         model_id = "LGAI-EXAONE/EXAONE-3.0-7.8B-Instruct"
         promptor = Promptor(ExaonePromptor, model_id)
-    elif args.model_type in ["gpt-4o-mini", "gpt-4-turbo"]:
+    elif args.model_type in ["gpt-4o-mini", "gpt-4-turbo", "gpt-4o"]:
         model_id = args.model_type
         promptor = Promptor(ChatGPTPromptor, model_id)
 
@@ -125,7 +125,7 @@ def main():
     # parser.add_argument("-cda", "--do_cda", dest="do_cda", action="store_true")
     args = parser.parse_args()
 
-    promptor = load_mode(args)
+    promptor = load_model(args)
 
     for data_type in args.data_types:
         data_path = Path(args.root_dir) / args.data_dir / data_type / "test"
