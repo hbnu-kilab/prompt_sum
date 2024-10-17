@@ -72,7 +72,7 @@ def do_eval_meeting_summary(args, promptor, json_lst):
         aug_ids_lst.append(aug_ids)
         ex_ids_lst.append(ex_ids)
 
-    ex_eval(aug_ids, ex_ids)
+    ex_eval(aug_ids_lst, ex_ids_lst)
 
 
 def ex_eval(output_doc_ids, oracle_doc_ids):
