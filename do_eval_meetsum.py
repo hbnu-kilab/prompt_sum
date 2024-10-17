@@ -42,10 +42,10 @@ def do_eval_meeting_summary(args, promptor, json_lst):
     aug_ids_lst, ex_ids_lst = [], []
     for i, ori in tqdm(enumerate(json_lst), total=len(json_lst)):
         # make dialogue with sent_id
-        dialog_str = ' '.join([f'[{k}] {v.get("sentence")}' for k, v in json_lst['dialogue'].items()])
+        dialog_str = ' '.join([f'[{k}] {v.get("sentence")}' for k, v in ori['dialogue'].items()])
         
         # gold data
-        total_summary = json_lst['total_summary']
+        total_summary = ori['total_summary']
         total_topic = total_summary['total_topic']
         ex_ids = total_summary['total_sentence_ids']
 
