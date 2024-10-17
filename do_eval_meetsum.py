@@ -45,7 +45,7 @@ def do_eval_meeting_summary(args, promptor, json_lst):
         dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in ori['dialogue']])
         
         # gold data
-        total_summary = ori['total_summary']
+        total_summary = ori['total_summary'][0]
         total_topic = total_summary['total_topic']
         ex_ids = total_summary['total_sentence_ids']
 
