@@ -130,8 +130,9 @@ def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst
             aug_data = promptor.do_llm(instruction)
 
             aug_ids = eval(aug_data.split(': ')[-1].strip())
+            if type(aug_ids) == tuple: aug_ids = list(aug_ids)
             if 0 in aug_ids:
-                del aug_ids.index(0)
+                del aug_ids[aug_ids.index(0)]
 
             merged_ids = sorted(set(aug_ids + ex_ids))
 
