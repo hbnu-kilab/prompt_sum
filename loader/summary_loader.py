@@ -100,7 +100,7 @@ class SummaryETRILoader(DataLoaderInterface):
 
 
     def load(self, json_lst, *args):
-        return getattr(self, args)(json_lst)
+        return getattr(self, args[0])(json_lst)
 
         # ex_sent_lst = []
 
