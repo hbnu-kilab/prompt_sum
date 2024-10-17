@@ -72,7 +72,7 @@ class SummaryETRILoader(DataLoaderInterface):
     def __init__(self) -> None:
         super().__init__()
     
-    def load_total_ex(json_lst):
+    def load_total_ex(self, json_lst):
         ex_sent_lst = []
 
         for json_doc in tqdm(json_lst, total=len(json_lst), desc="load json"):

@@ -110,7 +110,7 @@ def aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_
                     with open(f"./{save_path/data_type}/{title}.{aug_type}{file_ext}", 'w') as of:
                         json.dump(copy_ori, of, indent=4, ensure_ascii=False)
     
-def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, dialog_lst, data_type):
+def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst, dialog_lst, data_type):
     # all text
     # total extract sentence 
     # LLM -> total extract sentence와 관련있는 sentence만 출력
@@ -120,11 +120,11 @@ def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, dialog_lst,
     save_path = Path(args.save_dir)
 
     with open(f"{save_path/data_type}.log", 'w') as pf:
-        for i, (d_dir, ori, dialog_dict) in tqdm(enumerate(zip(data_dir_list, json_lst, dialog_lst)), total=len(data_dir_list)):
+        for i, (d_dir, ori, ext_lst, dialog_dict) in tqdm(enumerate(zip(data_dir_list, json_lst, ex_sent_lst, dialog_lst)), total=len(data_dir_list)):
 
             title, file_ext = os.path.splitext(d_dir.split('/')[-1])
             # make dialogue with sent_id
-            dialog_str = ' '.join([f'[{k}] {v}' for k, v in dialog_dict.items()])
+            dialog_str = ' '.join([f'[{k}] {v.get("sentence")}' for k, v in dialog_dict.items()])
             instruction = mk_inst_exsum_wo_noise(dialog_str)
                 
             aug_data = promptor.do_llm(instruction)
@@ -158,7 +158,7 @@ def main():
         data_dir_list, json_lst, ex_sent_lst, dialog_lst = load_data(data_path)
 
         aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type)
-        aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, dialog_lst, data_type)
+        aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst, dialog_lst, data_type)
 
 
 if __name__ == "__main__":
