@@ -140,6 +140,7 @@ def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst
             tmp_aug = aug_data.split(': ')[-1].strip()
             try:
                 if tmp_aug[-1] == '.': tmp_aug = tmp_aug[:-1]
+                if "[결과 id 리스트]:" in tmp_aug: tmp_aug = tmp_aug.split("[결과 id 리스트]: ")[-1]
                 
                 if tmp_aug[0] == '[' and tmp_aug[-1] != ']': tmp_aug += ']'
                 elif tmp_aug[0] != '[' and tmp_aug[-1] == ']': tmp_aug = '[' + tmp_aug
