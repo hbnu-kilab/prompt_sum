@@ -194,10 +194,10 @@ def sum_w_cda(model_type, src_lst, sum_lst, metric, promptor):
         "meteor": eval_metric["meteor"]*100,
     })
 
-src_lst, sum_lst = init_data()
-promptor = init_model()
+# src_lst, sum_lst = init_data()
+# promptor = init_model()
 
-if do_cda:
-    sum_w_cda(model_type, src_lst, sum_lst, metric, promptor)
-else:
-    baseline(model_type, src_lst, sum_lst, metric, promptor)
+# if do_cda:
+#     sum_w_cda(model_type, src_lst, sum_lst, metric, promptor)
+# else:
+#     baseline(model_type, src_lst, sum_lst, metric, promptor)
