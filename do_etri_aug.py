@@ -148,10 +148,11 @@ def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst
 
             merged_id_dict = {v:k for k, v in enumerate(merged_ids)}
             ori["total_summary"][0]["total_sentence_ids"] = [merged_id_dict[ex_id] for ex_id in ex_ids]
-            ori["total_summary"][0]["speaker_sentence_ids"] \
-                = [merged_id_dict[ex_id] for ex_id 
-                    in ori["total_summary"][0]["speaker_sentence_ids"] 
-                    if ex_id in merged_id_dict]
+            if "speaker_sentence_ids" in ori["total_summary"][0]:
+                ori["total_summary"][0]["speaker_sentence_ids"] \
+                    = [merged_id_dict[ex_id] for ex_id 
+                        in ori["total_summary"][0]["speaker_sentence_ids"] 
+                        if ex_id in merged_id_dict]
 
             # aug_dial_lst = [{dialog_dict[mid]} for mid in merged_ids]
             aug_dial_lst = []
