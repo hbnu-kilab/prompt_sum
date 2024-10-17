@@ -163,7 +163,9 @@ def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst
                     aug_dial_lst.append(dialog_dict[mid])
                 else: no_merged_id += 1
 
-            ret_dict = {"dialog": aug_dial_lst, "total_summary": ori["total_summary"], 'metadata': ori['metadata']}
+            ret_dict = {"dialog": aug_dial_lst, "total_summary": ori["total_summary"]}
+            if 'metadata' in ori:
+                ret_dict.update('metadata', ori['metadata'])
 
 
             with open(f"./{save_path/data_type}/{title}.wo_noise{file_ext}", 'w') as of:
