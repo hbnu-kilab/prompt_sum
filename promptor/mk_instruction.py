@@ -103,8 +103,8 @@ def mk_inst_exsum_wo_noise(sent, sum_ids):
 <order>:
 1. 주어진 입력은 [num] sentence 가 연결된 meeting dialogue 입니다.
 2. 전체 회의에서 추출된 요약인 extractive summary의 id 리스트가 주워집니다.
-3. 전체 대화를 파악하여 입력된 extractive summary에 관련있는 문장들의 id 찾아 선별해주세요.
-4. 출력은 문장의 id를 다음과 같이 0, 1, 2, ... 나열되는 형식으로 결과 id 리스트: 뒤에 출력하세요.
+3. 전체 대화를 파악하여 입력된 extractive summary에 관련있는 문장들의 id를 meeting dialogue에서 찾아 선별해주세요.
+4. 출력은 선별한 문장의 id를 다음과 같이 0, 1, 2, ... 나열되는 형식으로 결과 id 리스트: 뒤에 출력하세요.
 
 <format>:
 Extractive summary ids: {sum_ids}
