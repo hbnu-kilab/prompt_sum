@@ -37,12 +37,31 @@ def load_model(args):
 
     return promptor
 
+def postpro_ex_sum(aug_data):
+    tmp_aug = aug_data.split(': ')[-1].strip()
+    try:
+        if tmp_aug[-1] == '.': tmp_aug = tmp_aug[:-1]
+        if "[결과 id 리스트]:" in tmp_aug: tmp_aug = tmp_aug.split("[결과 id 리스트]: ")[-1]
+
+        if tmp_aug[0] == '[' and tmp_aug[-1] != ']': tmp_aug += ']'
+        elif tmp_aug[0] != '[' and tmp_aug[-1] == ']': tmp_aug = '[' + tmp_aug
+
+        aug_ids = eval(tmp_aug)
+    except:
+        print(aug_data)
+
+    if type(aug_ids) == tuple: aug_ids = list(aug_ids)
+    if 0 in aug_ids:
+        del aug_ids[aug_ids.index(0)]
+    
+    return aug_ids
 
 def do_eval_meeting_summary(args, promptor, json_lst):
     aug_ids_lst, ex_ids_lst = [], []
     for i, ori in tqdm(enumerate(json_lst), total=len(json_lst)):
         # make dialogue with sent_id
-        dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in ori['dialogue']])
+        dialogue = ori['dialogue']
+        dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in dialogue])
         
         # gold data
         total_summary = ori['total_summary'][0]
@@ -51,26 +70,28 @@ def do_eval_meeting_summary(args, promptor, json_lst):
 
         topic_cot = promptor.do_llm(f"Let's think step by step for the {total_topic}, 결과는 한국어로 출력해줘.")
         topic_input = f'Topic: {total_topic}, Sub-topics: {topic_cot}, 이와 관련있는 문장을 모두 찾으시오.'
-        instruction = mk_inst_exsum_meetsum(dialog_str, topic_input, len(ori['dialogue']))
+        instruction = mk_inst_exsum_meetsum(dialog_str, topic_input, len(dialogue))
             
         aug_data = promptor.do_llm(instruction)
 
-        tmp_aug = aug_data.split(': ')[-1].strip()
-        try:
-            if tmp_aug[-1] == '.': tmp_aug = tmp_aug[:-1]
-            if "[결과 id 리스트]:" in tmp_aug: tmp_aug = tmp_aug.split("[결과 id 리스트]: ")[-1]
+        aug_ids = postpro_ex_sum(aug_data)
 
-            if tmp_aug[0] == '[' and tmp_aug[-1] != ']': tmp_aug += ']'
-            elif tmp_aug[0] != '[' and tmp_aug[-1] == ']': tmp_aug = '[' + tmp_aug
+        ###
+        step = 5
+        new_dialogue = []
+        for a_id in range(0, len(aug_ids), step):
+            # aug_sent_range = range(aug_ids[a_id], aug_ids[a_id+step])
+            new_dialogue += dialogue[aug_ids[a_id]:aug_ids[a_id+step]]
 
-            aug_ids = eval(tmp_aug)
-        except:
-            print(aug_data)
+        new_dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in new_dialogue])
 
-        if type(aug_ids) == tuple: aug_ids = list(aug_ids)
-        if 0 in aug_ids:
-            del aug_ids[aug_ids.index(0)]
+        instruction = mk_inst_exsum_meetsum(new_dialog_str, topic_input, len(new_dialog_str.count('[')))
 
+        aug_data = promptor.do_llm(instruction)
+
+        aug_ids = postpro_ex_sum(aug_data)
+
+        ######
         aug_ids_lst.append(aug_ids)
         ex_ids_lst.append(ex_ids)
 
