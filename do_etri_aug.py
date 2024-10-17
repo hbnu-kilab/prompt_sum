@@ -118,11 +118,13 @@ def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst
     # gen_all_text -> total summary 저장
 
     save_path = Path(args.save_dir)
+    ori_sent_cnt, diff_sent_cnt = 0, 0
 
     with open(f"{save_path/data_type}.log", 'w') as pf:
         for i, (d_dir, ori, ext_lst, dialog_dict) in tqdm(enumerate(zip(data_dir_list, json_lst, ex_sent_lst, dialog_lst)), total=len(data_dir_list)):
             title, file_ext = os.path.splitext(d_dir.split('/')[-1])
             # make dialogue with sent_id
+            ori_sent_cnt += len(dialog_dict)
             dialog_str = ' '.join([f'[{k}] {v.get("sentence")}' for k, v in dialog_dict.items()])
             ex_ids = [ex["sentence_id"] for ex in ext_lst[0]]
             instruction = mk_inst_exsum_wo_noise(dialog_str, ex_ids)
@@ -135,6 +137,7 @@ def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst
                 del aug_ids[aug_ids.index(0)]
 
             merged_ids = sorted(set(aug_ids + ex_ids))
+            diff_sent_cnt += len(merged_ids)
 
             merged_id_dict = {v:k for k, v in enumerate(merged_ids)}
             ori["total_summary"][0]["total_sentence_ids"] = [merged_id_dict[ex_id] for ex_id in ex_ids]
@@ -160,6 +163,7 @@ def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst
 
 
     print(f"Num of no merged id in dialogue: {no_merged_id}")
+    print(f"Reduction ratio: {diff_sent_cnt / ori_sent_cnt:.4f}")
 
 def main():
     parser = argparse.ArgumentParser()
