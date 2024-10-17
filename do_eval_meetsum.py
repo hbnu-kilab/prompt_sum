@@ -47,7 +47,7 @@ def do_eval_meeting_summary(args, promptor, json_lst):
         # gold data
         total_summary = ori['total_summary'][0]
         total_topic = total_summary['total_topic']
-        ex_ids = total_summary['total_sentence_ids']
+        ex_ids = total_summary['total_sentence_ids'] if 'total_sentence_ids' in total_summary else total_summary['speaker_sentence_ids']
 
         instruction = mk_inst_exsum_meetsum(dialog_str, total_topic)
             
