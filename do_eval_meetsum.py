@@ -8,9 +8,11 @@ from promptor.mk_instruction import mk_inst_exsum_meetsum
 
 import torch
 import argparse
-import json
-from copy import deepcopy
 
+from do_ex import baseline
+
+import evaluate
+from transformers import AutoTokenizer
 
 def load_data(data_dir):
     # SBSC data
@@ -56,6 +58,40 @@ def postpro_ex_sum(aug_data):
         del aug_ids[aug_ids.index(0)]
     
     return aug_ids
+
+
+
+def ex_eval(output_doc_ids, oracle_doc_ids):
+    # accuracy
+    # indexes = torch.tensor(output_doc_ids)
+    indexes = [torch.tensor(o_el) for o_el in output_doc_ids]
+    target = [torch.tensor(o_el) for o_el in oracle_doc_ids]
+    
+    # macro f1
+    hits = [torch.isin(idx, tgt).sum().item() for idx, tgt in zip(indexes, target)]
+    recalls = [h/len(tgt) for h, tgt in zip(hits, target)]
+    precs = [h/len(idx) for h, idx in zip(hits, indexes)]
+    f1s = [2*(prec*rec) / (prec+rec) if (prec+rec) > 0 else 0 for prec, rec in zip(precs, recalls)]
+
+    rec = sum(recalls) / len(recalls) * 100
+    pre = sum(precs) / len(precs) * 100
+    f1 = sum(f1s) / len(f1s) * 100
+
+    c_cnt, o_cnt = 0, 0
+    for ordata, outdata in zip(oracle_doc_ids, output_doc_ids):
+        all_ids = ordata + outdata
+        c_cnt += len(all_ids) - len(set(all_ids))
+        o_cnt += len(outdata)
+
+    avg_score = c_cnt/o_cnt * 100
+    
+    
+    print(f"Score: [ACC] {avg_score:.2f}, [PREC] {pre:.2f}, [REC] {rec:.2f}, [F1] {f1:.2f}")
+    # print(f"Retrieval Score: [Hits] {hr:.4f}, [RPEC] {rp:.4f}, [RREC] {r2:.4f}, [MAP] {map:.4f}, [MRR] {mrr:.4f}, [NDGC] {ndcg:.4f}")
+    print(f"output doc ids: {output_doc_ids[0]}")
+    print(f"oracle doc ids: {oracle_doc_ids[0]}")
+    print("-------------------------")
+
 
 def do_eval_meeting_summary(args, promptor, json_lst):
     aug_ids_lst, ex_ids_lst = [], []
@@ -105,46 +141,24 @@ def do_eval_meeting_summary(args, promptor, json_lst):
 
     ex_eval(aug_ids_lst, ex_ids_lst)
 
+    return aug_ids_lst, ex_ids_lst
 
-def ex_eval(output_doc_ids, oracle_doc_ids):
-    # accuracy
-    # indexes = torch.tensor(output_doc_ids)
-    indexes = [torch.tensor(o_el) for o_el in output_doc_ids]
-    target = [torch.tensor(o_el) for o_el in oracle_doc_ids]
-    
-    # macro f1
-    hits = [torch.isin(idx, tgt).sum().item() for idx, tgt in zip(indexes, target)]
-    recalls = [h/len(tgt) for h, tgt in zip(hits, target)]
-    precs = [h/len(idx) for h, idx in zip(hits, indexes)]
-    f1s = [2*(prec*rec) / (prec+rec) if (prec+rec) > 0 else 0 for prec, rec in zip(precs, recalls)]
 
-    rec = sum(recalls) / len(recalls) * 100
-    pre = sum(precs) / len(precs) * 100
-    f1 = sum(f1s) / len(f1s) * 100
+def abstractive_summary(json_lst, aug_ids_lst, ex_ids_lst):
+    src_lst, sum_lst = [], []
+    for i, (ori, aug_ids, ex_ids) in tqdm(enumerate(zip(json_lst, aug_ids_lst, ex_ids_lst)), total=len(json_lst)):
+        # make dialogue with sent_id
+        dialogue = ori['dialogue']
+        total_asummary = ori["total_summary"][0]["total_asummary"]
 
-    c_cnt, o_cnt = 0, 0
-    for ordata, outdata in zip(oracle_doc_ids, output_doc_ids):
-        all_ids = ordata + outdata
-        c_cnt += len(all_ids) - len(set(all_ids))
-        o_cnt += len(outdata)
+        ex_dial_str = ' '.join([dialogue[ex_id].get("sentence") for ex_id in ex_ids])
 
-    avg_score = c_cnt/o_cnt * 100
-    
-    # torchmetric
-    # preds = torch.cat(output_doc_scores).to("cpu")
-    # target_mask = torch.cat([torch.isin(idx, gold).long().unsqueeze(0) for idx, gold in zip(indexes, target)])
-    # rp = self.rp(preds, target_mask, indexes=indexes)
-    # r2 = self.r2(preds, target_mask, indexes=indexes)
-    # hr = self.hr(preds, target_mask, indexes=indexes)
-    # map = self.map(preds, target_mask, indexes=indexes)
-    # mrr = self.mrr(preds, target_mask, indexes=indexes)
-    # ndcg = self.ndcg(preds, target_mask, indexes=indexes)
+        src_lst.append(ex_dial_str)
+        sum_lst.append(total_asummary)
+        
+    return src_lst, sum_lst
 
-    print(f"Score: [ACC] {avg_score:.2f}, [PREC] {pre:.2f}, [REC] {rec:.2f}, [F1] {f1:.2f}")
-    # print(f"Retrieval Score: [Hits] {hr:.4f}, [RPEC] {rp:.4f}, [RREC] {r2:.4f}, [MAP] {map:.4f}, [MRR] {mrr:.4f}, [NDGC] {ndcg:.4f}")
-    print(f"output doc ids: {output_doc_ids[0]}")
-    print(f"oracle doc ids: {oracle_doc_ids[0]}")
-    print("-------------------------")
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -158,12 +172,18 @@ def main():
 
     promptor = load_model(args)
 
+    metric = evaluate.combine(["bleu", "rouge", "meteor"])
+    tokenizer = AutoTokenizer.from_pretrained("klue/roberta-base")
+
     for data_type in args.data_types:
         data_path = Path(args.root_dir) / args.data_dir / data_type / "test"
         data_dir_list, json_lst  = load_data(data_path)
 
-        do_eval_meeting_summary(args, promptor, json_lst)
+        aug_ids_lst, ex_ids_lst = do_eval_meeting_summary(args, promptor, json_lst)
 
+        src_lst, sum_lst = abstractive_summary(json_lst, aug_ids_lst, ex_ids_lst)
+
+        baseline(args.model_type, src_lst, sum_lst, metric)
 
 if __name__ == "__main__":
     main()
