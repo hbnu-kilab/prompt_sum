@@ -123,6 +123,8 @@ def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst
 
     with open(f"{save_path/data_type}.log", 'w') as pf:
         for i, (d_dir, ori, ext_lst, dialog_dict) in tqdm(enumerate(zip(data_dir_list, json_lst, ex_sent_lst, dialog_lst)), total=len(data_dir_list)):
+            if len(ext_lst) == 0: continue
+
             title, file_ext = os.path.splitext(d_dir.split('/')[-1])
             # make dialogue with sent_id
             ori_sent_cnt += len(dialog_dict)
