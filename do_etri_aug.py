@@ -134,11 +134,13 @@ def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst
             tmp_aug = aug_data.split(': ')[-1].strip()
             try:
                 if tmp_aug[-1] == '.': tmp_aug = tmp_aug[:-1]
-                aug_ids = eval(tmp_aug)
-            except:
+                
                 if tmp_aug[0] == '[' and tmp_aug[-1] != ']': tmp_aug += ']'
                 elif tmp_aug[0] != '[' and tmp_aug[-1] == ']': tmp_aug = '[' + tmp_aug
+
                 aug_data = eval(tmp_aug)
+            except:
+                print(aug_data)
 
             if type(aug_ids) == tuple: aug_ids = list(aug_ids)
             if 0 in aug_ids:
