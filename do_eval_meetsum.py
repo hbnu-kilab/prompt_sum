@@ -122,20 +122,23 @@ def do_eval_meeting_summary(args, promptor, json_lst):
         ###
         step = 3
         new_dialogue = []
-        for a_id in range(0, len(first_aug_ids), step):
-            # aug_sent_range = range(aug_ids[a_id], aug_ids[a_id+step])
-            end_id = a_id+step-1
-            new_dialogue += dialogue[first_aug_ids[a_id]-1:first_aug_ids[end_id if end_id < len(first_aug_ids)-1 else len(first_aug_ids)-1]-1]
+        try:
+            for a_id in range(0, len(first_aug_ids), step):
+                # aug_sent_range = range(aug_ids[a_id], aug_ids[a_id+step])
+                end_id = a_id+step-1
+                new_dialogue += dialogue[first_aug_ids[a_id]-1:first_aug_ids[end_id if end_id < len(first_aug_ids)-1 else len(first_aug_ids)-1]-1]
 
-        new_dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in new_dialogue])
+            new_dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in new_dialogue])
 
-        instruction = mk_inst_exsum_meetsum(new_dialog_str, topic_input, new_dialog_str.count('['), 20)
+            instruction = mk_inst_exsum_meetsum(new_dialog_str, topic_input, new_dialog_str.count('['), 20)
 
-        aug_data = promptor.do_llm(instruction)
+            aug_data = promptor.do_llm(instruction)
 
-        sec_aug_ids = postpro_ex_sum(aug_data)
-        if sec_aug_ids == []: 
-            print(aug_data)
+            sec_aug_ids = postpro_ex_sum(aug_data)
+            if sec_aug_ids == []: 
+                print(aug_data)
+                sec_aug_ids = first_aug_ids
+        except:
             sec_aug_ids = first_aug_ids
 
         ######
