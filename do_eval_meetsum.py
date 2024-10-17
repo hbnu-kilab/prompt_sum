@@ -49,6 +49,7 @@ def postpro_ex_sum(aug_data):
         aug_ids = eval(tmp_aug)
     except:
         print(aug_data)
+        aug_ids = []
 
     if type(aug_ids) == tuple: aug_ids = list(aug_ids)
     if 0 in aug_ids:
@@ -75,6 +76,9 @@ def do_eval_meeting_summary(args, promptor, json_lst):
         aug_data = promptor.do_llm(instruction)
 
         aug_ids = postpro_ex_sum(aug_data)
+        if aug_ids == []: 
+            print(aug_data)
+            continue
 
         ###
         step = 5
@@ -91,6 +95,9 @@ def do_eval_meeting_summary(args, promptor, json_lst):
         aug_data = promptor.do_llm(instruction)
 
         aug_ids = postpro_ex_sum(aug_data)
+        if aug_ids == []: 
+            print(aug_data)
+            continue
 
         ######
         aug_ids_lst.append(aug_ids)
