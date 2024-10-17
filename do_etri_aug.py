@@ -131,7 +131,14 @@ def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst
                 
             aug_data = promptor.do_llm(instruction)
 
-            aug_ids = eval(aug_data.split(': ')[-1].strip())
+            try:
+                aug_ids = eval(aug_data.split(': ')[-1].strip())
+            except:
+                tmp_aug = aug_data.split(': ')[-1].strip()
+                if tmp_aug[0] == '[' and tmp_aug[-1] != ']': tmp_aug += ']'
+                elif tmp_aug[0] != '[' and tmp_aug[-1] == ']': tmp_aug = '[' + tmp_aug
+                aug_data = eval(tmp_aug)
+
             if type(aug_ids) == tuple: aug_ids = list(aug_ids)
             if 0 in aug_ids:
                 del aug_ids[aug_ids.index(0)]
