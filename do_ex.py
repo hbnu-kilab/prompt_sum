@@ -23,44 +23,49 @@ carrotter/ko-gemma-2b-it-sft
 """
 nshot = 0
 
-if data_type == "SBSC":
-    # SBSC data
-    data_dir = "modu/NIKL_SBSC_2023_v1.0"
-    data_loader = DataLoader(JsonInDirLoader, "json")
-    sum_loader = SummaryLoader(SummarySBSCLoader)
-    data_dir_list = data_loader.get_listdir(ROOT_DIR, data_dir)
-    json_lst = list(data_loader.load(data_dir_list))
-    src_lst, sum_lst = sum_loader.load(json_lst)
-elif data_type == "news":
-    # News data
-    data_dir = "aihub/summarization/news/news_valid_original.json"
-    data_loader = DataLoader(JsonLoader, "json")
-    sum_loader = SummaryLoader(SummaryAIHubNewsLoader)
-    json_obj = data_loader.load(Path(ROOT_DIR) / data_dir)
-    src_lst, sum_lst = sum_loader.load(json_obj)
+def init_data():
+    if data_type == "SBSC":
+        # SBSC data
+        data_dir = "modu/NIKL_SBSC_2023_v1.0"
+        data_loader = DataLoader(JsonInDirLoader, "json")
+        sum_loader = SummaryLoader(SummarySBSCLoader)
+        data_dir_list = data_loader.get_listdir(ROOT_DIR, data_dir)
+        json_lst = list(data_loader.load(data_dir_list))
+        src_lst, sum_lst = sum_loader.load(json_lst)
+    elif data_type == "news":
+        # News data
+        data_dir = "aihub/summarization/news/news_valid_original.json"
+        data_loader = DataLoader(JsonLoader, "json")
+        sum_loader = SummaryLoader(SummaryAIHubNewsLoader)
+        json_obj = data_loader.load(Path(ROOT_DIR) / data_dir)
+        src_lst, sum_lst = sum_loader.load(json_obj)
 
-    src_lst = src_lst[:len(src_lst)//5]
-    sum_lst = sum_lst[:len(sum_lst)//5]
-elif data_type == "law":
-    data_dir = "aihub/summarization/law/valid_original.json"
-    data_loader = DataLoader(JsonLoader, "json")
-    sum_loader = SummaryLoader(SummaryAIHubNewsLoader)
-    json_obj = data_loader.load(Path(ROOT_DIR) / data_dir)
-    src_lst, sum_lst = sum_loader.load(json_obj)
+        src_lst = src_lst[:len(src_lst)//5]
+        sum_lst = sum_lst[:len(sum_lst)//5]
+    elif data_type == "law":
+        data_dir = "aihub/summarization/law/valid_original.json"
+        data_loader = DataLoader(JsonLoader, "json")
+        sum_loader = SummaryLoader(SummaryAIHubNewsLoader)
+        json_obj = data_loader.load(Path(ROOT_DIR) / data_dir)
+        src_lst, sum_lst = sum_loader.load(json_obj)
 
+    return src_lst, sum_lst
 
-if model_type == "gemma2":
-    model_id = "carrotter/ko-gemma-2b-it-sft"
-    # model_id = "rtzr/ko-gemma-2-9b-it"
-    promptor = Promptor(Gemma2Promptor, model_id)
-elif model_type == "exaone":
-    model_id = "LGAI-EXAONE/EXAONE-3.0-7.8B-Instruct"
-    promptor = Promptor(ExaonePromptor, model_id)
-elif model_type in ["gpt-4o-mini", "gpt-4-turbo"]:
-    model_id = model_type
-    promptor = Promptor(ChatGPTPromptor, model_id)
+def init_model():
+    if model_type == "gemma2":
+        model_id = "carrotter/ko-gemma-2b-it-sft"
+        # model_id = "rtzr/ko-gemma-2-9b-it"
+        promptor = Promptor(Gemma2Promptor, model_id)
+    elif model_type == "exaone":
+        model_id = "LGAI-EXAONE/EXAONE-3.0-7.8B-Instruct"
+        promptor = Promptor(ExaonePromptor, model_id)
+    elif model_type in ["gpt-4o-mini", "gpt-4-turbo"]:
+        model_id = model_type
+        promptor = Promptor(ChatGPTPromptor, model_id)
 
-def baseline(model_type, src_lst, sum_lst, metric):
+    return promptor
+
+def baseline(model_type, src_lst, sum_lst, metric, promptor):
     with open(f"./result/pred_{model_type}", 'w') as pf, open(f"./result/gold_{model_type}", 'w') as gf:
         tokenized_output_sum_lst, tokenized_sum_lst = [], []
 
@@ -121,7 +126,7 @@ def baseline(model_type, src_lst, sum_lst, metric):
 
 
 
-def sum_w_cda(model_type, src_lst, sum_lst, metric):
+def sum_w_cda(model_type, src_lst, sum_lst, metric, promptor):
     with open(f"./result/pred_w_cda_{model_type}", 'w') as pf, open(f"./result/gold_w_cda_{model_type}", 'w') as gf, open(f"./result/counterfactual_w_cda_{model_type}", 'w') as cf:
         tokenized_output_sum_lst, tokenized_sum_lst = [], []
     
@@ -189,8 +194,10 @@ def sum_w_cda(model_type, src_lst, sum_lst, metric):
         "meteor": eval_metric["meteor"]*100,
     })
 
+src_lst, sum_lst = init_data()
+promptor = init_model()
 
 if do_cda:
-    sum_w_cda(model_type, src_lst, sum_lst, metric)
+    sum_w_cda(model_type, src_lst, sum_lst, metric, promptor)
 else:
-    baseline(model_type, src_lst, sum_lst, metric)
+    baseline(model_type, src_lst, sum_lst, metric, promptor)
