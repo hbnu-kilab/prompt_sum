@@ -171,7 +171,7 @@ def abstractive_summary(json_lst, aug_ids_lst, ex_ids_lst, sum_type="total_summa
         total_asummary = ori[sum_type][0][asum_type]
 
         ex_dial_str = ' '.join([dialogue_dict[ex_id].get("sentence").replace('n/', '').replace('o/', '').strip()
-                                 for ex_id in ex_ids])
+                                 for ex_id in ex_ids if ex_id in dialogue_dict])
 
         src_lst.append(ex_dial_str)
         sum_lst.append(total_asummary)
