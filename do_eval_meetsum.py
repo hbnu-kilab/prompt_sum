@@ -191,7 +191,7 @@ def main():
     # parser.add_argument("-cda", "--do_cda", dest="do_cda", action="store_true")
     args = parser.parse_args()
 
-    sum_type = args.summary_type
+    sum_type = args.summary_types
     promptor = load_model(args)
 
     # metric = evaluate.combine(["bleu", "rouge", "meteor"])
