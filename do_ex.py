@@ -68,8 +68,10 @@ def init_model():
 def baseline(model_type, src_lst, sum_lst, sum_range, metric, promptor):
     with open(f"./result/pred_{model_type}", 'w') as pf, open(f"./result/gold_{model_type}", 'w') as gf:
         tokenized_output_sum_lst, tokenized_sum_lst = [], []
+        scores_dict = {}
+        total_len = len(src_lst)
 
-        for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=len(src_lst)):
+        for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=total_len):
             prev_gold_sum = sum_lst[i-1]
             if nshot == 0:
                 instruction = mk_inst_for_summary(src, sum_range)
@@ -92,6 +94,9 @@ def baseline(model_type, src_lst, sum_lst, sum_range, metric, promptor):
             tokenized_output_sum_lst.append(tokenized_output_sum)
             tokenized_sum_lst.append(tokenized_sum)
             
+            score_dict = gather_rouge(sum, output_sum, scores_dict, metric)
+
+            '''
             metric.add_batch(predictions=[tokenized_output_sum], references=[tokenized_sum])
             try:
                 eval_metric = metric.compute()
@@ -106,13 +111,20 @@ def baseline(model_type, src_lst, sum_lst, sum_range, metric, promptor):
                 "eval_rougeLsum": eval_metric["rougeLsum"]*100,
                 "meteor": eval_metric["meteor"]*100,
             })
-    
+            '''
+
+            print(score_dict)
+
+            print()
             print(f"Input text: {instruction}")
             print(f"Output summary: {output_sum}")
             pf.write(f"{output_sum}\n")
             gf.write(f"{sum}\n")
             print(f"Gold Output summary: {sum}\n\n\n")
 
+        avg_rouge(scores_dict, total_len)
+        print_rouge(scores_dict)
+    '''
     metric.add_batch(predictions=tokenized_output_sum_lst, references=tokenized_sum_lst)
     eval_metric = metric.compute()
     print({
@@ -123,12 +135,33 @@ def baseline(model_type, src_lst, sum_lst, sum_range, metric, promptor):
         "eval_rougeLsum": eval_metric["rougeLsum"]*100,
         "meteor": eval_metric["meteor"]*100,
     })
+    '''
 
+def avg_rouge(scores_dict, total_len):
+    for k, v in scores_dict.items():
+        v = v/total_len * 100
 
+def print_rouge(scores_dict):
+    for k, v in scores_dict.items():
+        print(f"{k}: {v}")
+
+def gather_rouge(ref, pred, scores_dict, metric):
+    score_dict = metric.score(ref, pred)
+
+    for k, v in score_dict.items():
+        if k in scores_dict:
+            scores_dict[k].precision += score_dict[k].precision
+            scores_dict[k].recall += score_dict[k].recall
+            scores_dict[k].fmeasure += score_dict[k].fmeasure
+        else:
+            scores_dict[k] = score_dict[k]
+        
+    return score_dict
 
 def sum_w_cda(model_type, src_lst, sum_lst, metric, promptor):
     with open(f"./result/pred_w_cda_{model_type}", 'w') as pf, open(f"./result/gold_w_cda_{model_type}", 'w') as gf, open(f"./result/counterfactual_w_cda_{model_type}", 'w') as cf:
         tokenized_output_sum_lst, tokenized_sum_lst = [], []
+        scores_dict = {}
     
         for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=len(src_lst)):
             prev_gold_sum = sum_lst[i-1]
@@ -160,6 +193,7 @@ def sum_w_cda(model_type, src_lst, sum_lst, metric, promptor):
 
             tokenized_output_sum_lst.append(tokenized_output_sum)
             tokenized_sum_lst.append(tokenized_sum)
+            '''
             metric.add_batch(predictions=[tokenized_output_sum], references=[tokenized_sum])
             try:
                 eval_metric = metric.compute()
@@ -174,7 +208,10 @@ def sum_w_cda(model_type, src_lst, sum_lst, metric, promptor):
                 "eval_rougeLsum": eval_metric["rougeLsum"]*100,
                 "meteor": eval_metric["meteor"]*100,
             })
+            '''
     
+            gather_rouge(sum, output_sum, scores_dict, metric)
+
             print(f"Input text: {instruction}")
             print(f"Output summary: {output_sum}")
             print(f"Gold Output summary: {sum}")
