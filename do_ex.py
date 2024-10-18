@@ -65,7 +65,7 @@ def init_model():
 
     return promptor
 
-def baseline(model_type, src_lst, sum_lst, sum_range, metric, promptor):
+def baseline(model_type, src_lst, sum_lst, sum_range, metric, inst_maker, promptor):
     with open(f"./result/pred_{model_type}", 'w') as pf, open(f"./result/gold_{model_type}", 'w') as gf:
         tokenized_output_sum_lst, tokenized_sum_lst = [], []
         scores_dict = {}
@@ -235,11 +235,18 @@ def sum_w_cda(model_type, src_lst, sum_lst, metric, promptor):
         "meteor": eval_metric["meteor"]*100,
     })
 
-# src_lst, sum_lst = init_data()
-# promptor = init_model()
 
 sum_range="30~200"
-# if do_cda:
-#     sum_w_cda(model_type, src_lst, sum_lst, metric, promptor)
-# else:
-#     baseline(model_type, src_lst, sum_lst, sum_range, metric, promptor)
+def main():
+    if nshot == 0:
+        inst_maker = mk_inst_for_summary
+    elif nshot == 1:
+        inst_maker = mk_inst_for_summary_w_1shot
+
+    src_lst, sum_lst = init_data()
+    promptor = init_model()
+
+    if do_cda:
+        sum_w_cda(model_type, src_lst, sum_lst, metric, promptor)
+    else:
+        baseline(model_type, src_lst, sum_lst, sum_range, metric, inst_maker, promptor)

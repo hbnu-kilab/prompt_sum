@@ -1,3 +1,7 @@
 transformers
 evaluate
 hugginface_hub
+pandas
+openai
+evaluate
+korouge_score

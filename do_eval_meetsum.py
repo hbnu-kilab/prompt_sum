@@ -4,7 +4,7 @@ from pathlib import Path
 from loader import DataLoader, JsonInDirLoader, SummaryLoader, SummaryETRILoader
 from promptor import Promptor, ExaonePromptor, Gemma2Promptor, ChatGPTPromptor
 
-from promptor.mk_instruction import mk_inst_exsum_meetsum
+from promptor.mk_instruction import mk_inst_exsum_meetsum, mk_inst_for_meeting_summary
 
 import torch
 import argparse
@@ -193,6 +193,7 @@ def main():
 
     sum_type = args.summary_types
     promptor = load_model(args)
+    inst_maker = mk_inst_for_meeting_summary
 
     # metric = evaluate.combine(["bleu", "rouge", "meteor"])
     metric = rouge_scorer.RougeScorer(["rouge1", "rouge2", "rougeL", "rougeLsum"])
@@ -207,7 +208,7 @@ def main():
 
         src_lst, sum_lst = abstractive_summary(json_lst, aug_ids_lst, ex_ids_lst, sum_type)
 
-        baseline(args.model_type, src_lst, sum_lst, sum_range, metric, promptor)
+        baseline(args.model_type, src_lst, sum_lst, sum_range, metric, inst_maker, promptor)
 
 if __name__ == "__main__":
     main()
