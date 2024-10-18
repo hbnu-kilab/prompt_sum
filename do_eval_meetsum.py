@@ -4,16 +4,21 @@ from pathlib import Path
 from loader import DataLoader, JsonInDirLoader, SummaryLoader, SummaryETRILoader
 from promptor import Promptor, ExaonePromptor, Gemma2Promptor, ChatGPTPromptor
 
-from promptor.mk_instruction import mk_inst_exsum_meetsum, mk_inst_for_meeting_summary
+from promptor.mk_instruction import mk_inst_exsum_meetsum, mk_inst_for_meeting_summary, mk_inst_exsum_w_exids
 
 import torch
 import argparse
 
 from do_ex import baseline
 
-import evaluate
+# import evaluate
 from korouge_score import rouge_scorer
 
+import sys
+sys.path.append('/home/parkce/git-hubs/')
+sys.path.append('/home/parkce/git-hubs/multidyle')
+from multidyle.test_multi_dyle import test as multidyle_test
+from multidyle.test_multi_dyle import config as multidyle_config
 
 
 
@@ -96,7 +101,7 @@ def ex_eval(output_doc_ids, oracle_doc_ids):
     print("-------------------------")
 
 
-def do_eval_meeting_summary(args, promptor, json_lst, sum_type='total_summary'):
+def do_eval_meeting_summary(args, promptor, json_lst, sum_type='total_summary', multidyle_ex_ids=None):
     aug_ids_lst, ex_ids_lst = [], []
     for i, ori in tqdm(enumerate(json_lst), total=len(json_lst)):
         # make dialogue with sent_id
@@ -117,7 +122,11 @@ def do_eval_meeting_summary(args, promptor, json_lst, sum_type='total_summary'):
         ex_ids = total_summary[sentence_ids] if sentence_ids in total_summary else total_summary['speaker_sentence_ids']
         topic_cot = promptor.do_llm(f"Let's think step by step for the {total_topic}, 결과는 한국어로 출력해줘.")
         topic_input = f'Topic: {total_topic}, Sub-topics: {topic_cot}, 이와 관련있는 문장을 모두 찾으시오.'
-        instruction = mk_inst_exsum_meetsum(dialog_str, topic_input, len(dialogue), int(len(dialogue)*0.3))
+
+        if multidyle_ex_ids:
+            instruction = mk_inst_exsum_w_exids(dialog_str, topic_input, len(dialogue), int(len(dialogue)*0.3), multidyle_ex_ids[i])
+        else:
+            instruction = mk_inst_exsum_meetsum(dialog_str, topic_input, len(dialogue), int(len(dialogue)*0.3))
             
         aug_data = promptor.do_llm(instruction)
 
@@ -189,6 +198,7 @@ def main():
     parser.add_argument("-s", "--save_dir", default="./result/etri", dest="save_dir") 
     parser.add_argument("-m", "--model_type", default="gpt-4o-mini", dest="model_type", help="model_type: [gpt-4o-mini, gpt-4-turbo, gemma2, exaone]")
     # parser.add_argument("-cda", "--do_cda", dest="do_cda", action="store_true")
+    parser.add_argument("-pm", "--pipeline_method", default="util_llm", dest="pipeline_method", help="model_type: [util_llm, merge_exs]")
     args = parser.parse_args()
 
     sum_type = args.summary_types
@@ -200,11 +210,26 @@ def main():
     # tokenizer = AutoTokenizer.from_pretrained("klue/roberta-base")
     sum_range = "200~400"
 
+
     for data_type in args.data_types:
         data_path = Path(args.root_dir) / args.data_dir / data_type / "test"
         data_dir_list, json_lst  = load_data(data_path)
 
-        aug_ids_lst, ex_ids_lst = do_eval_meeting_summary(args, promptor, json_lst, sum_type)
+        if True:
+            # use multidyle encoder
+            multidyle_config.eval_model_dir = '/kilab/models/summarization/multidyle/encoder/epochs_1--val_26.3946'
+            multidyle_data_type = data_type.split('-')[0]
+            multidyle_config.test_type = multidyle_data_type
+            multidyle_config.dataset = [f'/kilab/data/etri/summarization/ko_ori/{multidyle_data_type}/']
+            multidyle_ex_ids = multidyle_test()
+
+        if args.pipeline_method == 'util_llm':
+            aug_ids_lst, ex_ids_lst = do_eval_meeting_summary(args, promptor, json_lst, sum_type, multidyle_ex_ids)
+        else:
+            aug_ids_lst, ex_ids_lst = do_eval_meeting_summary(args, promptor, json_lst, sum_type)
+
+        if args.pipeline_method == 'merge_exs':
+            ex_ids_lst = [list(set(n1 + n2)) for n1, n2 in zip(multidyle_ex_ids, ex_ids_lst)]
 
         src_lst, sum_lst = abstractive_summary(json_lst, aug_ids_lst, ex_ids_lst, sum_type)
 
