@@ -96,7 +96,7 @@ def ex_eval(output_doc_ids, oracle_doc_ids):
     print("-------------------------")
 
 
-def do_eval_meeting_summary(args, promptor, json_lst):
+def do_eval_meeting_summary(args, promptor, json_lst, sum_type='total_summary'):
     aug_ids_lst, ex_ids_lst = [], []
     for i, ori in tqdm(enumerate(json_lst), total=len(json_lst)):
         # make dialogue with sent_id
@@ -104,10 +104,17 @@ def do_eval_meeting_summary(args, promptor, json_lst):
         dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in dialogue])
         
         # gold data
-        total_summary = ori['total_summary'][0]
-        total_topic = total_summary['total_topic']
-        ex_ids = total_summary['total_sentence_ids'] if 'total_sentence_ids' in total_summary else total_summary['speaker_sentence_ids']
+        total_summary = ori[sum_type][0]
+        if sum_type == "total_summary":
+            topic_type = "total_topic"
+            sentence_ids = 'total_sentence_ids'
+        elif sum_type == "topic_summary":
+            topic_type = "topic"
+            sentence_ids = 'topic_sentence_ids'
 
+
+        total_topic = total_summary[topic_type]
+        ex_ids = total_summary[sentence_ids] if sentence_ids in total_summary else total_summary['speaker_sentence_ids']
         topic_cot = promptor.do_llm(f"Let's think step by step for the {total_topic}, 결과는 한국어로 출력해줘.")
         topic_input = f'Topic: {total_topic}, Sub-topics: {topic_cot}, 이와 관련있는 문장을 모두 찾으시오.'
         instruction = mk_inst_exsum_meetsum(dialog_str, topic_input, len(dialogue), int(len(dialogue)*0.3))
@@ -150,13 +157,13 @@ def do_eval_meeting_summary(args, promptor, json_lst):
     return aug_ids_lst, ex_ids_lst
 
 
-def abstractive_summary(json_lst, aug_ids_lst, ex_ids_lst):
+def abstractive_summary(json_lst, aug_ids_lst, ex_ids_lst, sum_type="total_summary"):
     src_lst, sum_lst = [], []
     for i, (ori, aug_ids, ex_ids) in tqdm(enumerate(zip(json_lst, aug_ids_lst, ex_ids_lst)), total=len(json_lst)):
         # make dialogue with sent_id
         dialogue = ori['dialogue']
         dialogue_dict = {v['sentence_id']: v for v in dialogue}
-        total_asummary = ori["total_summary"][0]["total_asummary"]
+        total_asummary = ori[sum_type][0][sum_type]
 
         ex_dial_str = ' '.join([dialogue_dict[ex_id].get("sentence").replace('n/', '').replace('o/', '').strip()
                                  for ex_id in ex_ids])
