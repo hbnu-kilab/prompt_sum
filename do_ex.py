@@ -138,8 +138,9 @@ def baseline(model_type, src_lst, sum_lst, sum_range, metric, promptor):
     '''
 
 def avg_rouge(scores_dict, total_len):
-    for k, v in scores_dict.items():
-        v = v/total_len * 100
+    for _, v in scores_dict.items():
+        for _, v_el in v.items():
+            v_el = v_el/total_len * 100
 
 def print_rouge(scores_dict):
     for k, v in scores_dict.items():
