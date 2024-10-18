@@ -94,7 +94,7 @@ def baseline(model_type, src_lst, sum_lst, sum_range, metric, inst_maker, prompt
             tokenized_output_sum_lst.append(tokenized_output_sum)
             tokenized_sum_lst.append(tokenized_sum)
             
-            score_dict = gather_rouge(sum, output_sum, scores_dict, metric)
+            score_dict = gather_rouge(tokenized_sum, tokenized_output_sum, scores_dict, metric)
 
             '''
             metric.add_batch(predictions=[tokenized_output_sum], references=[tokenized_sum])
