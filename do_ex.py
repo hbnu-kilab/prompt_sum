@@ -154,6 +154,7 @@ def gather_rouge(ref, pred, scores_dict, metric):
             scores_dict[k]['recall'] += score_dict[k].recall
             scores_dict[k]['fmeasure'] += score_dict[k].fmeasure
         else:
+            scores_dict[k] = {}
             scores_dict[k]['precision'] = score_dict[k].precision
             scores_dict[k]['recall'] = score_dict[k].recall
             scores_dict[k]['fmeasure'] = score_dict[k].fmeasure
