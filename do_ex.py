@@ -150,11 +150,13 @@ def gather_rouge(ref, pred, scores_dict, metric):
 
     for k, v in score_dict.items():
         if k in scores_dict:
-            scores_dict[k].precision += score_dict[k].precision
-            scores_dict[k].recall += score_dict[k].recall
-            scores_dict[k].fmeasure += score_dict[k].fmeasure
+            scores_dict[k]['precision'] += score_dict[k].precision
+            scores_dict[k]['recall'] += score_dict[k].recall
+            scores_dict[k]['fmeasure'] += score_dict[k].fmeasure
         else:
-            scores_dict[k] = score_dict[k]
+            scores_dict[k]['precision'] = score_dict[k].precision
+            scores_dict[k]['recall'] = score_dict[k].recall
+            scores_dict[k]['fmeasure'] = score_dict[k].fmeasure
         
     return score_dict
 
