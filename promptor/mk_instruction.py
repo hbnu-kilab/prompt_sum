@@ -153,14 +153,14 @@ def mk_inst_exsum_w_exids(sent, topic, dial_len, num_ex_sent, ex_ids):
 <order>:
 1. 입력 문장은 [num] sentence 와 같이 연결된 회의 대화 내용입니다.
 2. [Topic]이 주어지고, 주어진 [Topic]과 관련있는 문장을 모두 찾으시오.
-3. 자동으로 출력한 관련 문장 id를 활용해서 찾으세요.
-3. 입력된 문장은 총 {dial_len} 문장입니다. 전체 문장에서 골고루 선별해야 합니다.
-4. 문장은 {num_ex_sent} ~ {num_ex_sent+10} 만큼 선별하시오.
-5. 선별한 문장의 id들만 출력하면 되며, 다음과 같이 [1, 2, ..., n] 나열되는 형식으로 [결과 id 리스트]: 뒤에 출력하세요.
+3. 추출 요약으로 자동으로 출력한 [SUM_IDS]가 주어지며, 이를 참고하여 summary에 도움이 되는 문장을 선별하시오.
+4. 입력된 문장은 총 {dial_len} 문장입니다. 전체 문장에서 골고루 선별해야 합니다.
+5. 문장은 {num_ex_sent} ~ {num_ex_sent+10} 만큼 선별하시오.
+6. 선별한 문장의 id들만 출력하면 되며, 다음과 같이 [1, 2, ..., n] 나열되는 형식으로 [결과 id 리스트]: 뒤에 출력하세요.
 
 <format>:
 [Topic]: {topic}
-[관련 문장 id]: {ex_ids}
+[SUM_IDS]: {ex_ids}
 [입력 문장]: {sent}
 
 [결과 id 리스트]: 
