@@ -12,7 +12,7 @@ import argparse
 from do_ex import baseline
 
 import evaluate
-from transformers import AutoTokenizer
+from korouge_score import rouge_scorer
 
 
 
@@ -180,7 +180,8 @@ def main():
 
     promptor = load_model(args)
 
-    metric = evaluate.combine(["bleu", "rouge", "meteor"])
+    # metric = evaluate.combine(["bleu", "rouge", "meteor"])
+    metric = rouge_scorer.RougeScorer(["rouge1", "rouge2", "rougeL", "rougeLsum"])
     # tokenizer = AutoTokenizer.from_pretrained("klue/roberta-base")
     sum_range = "200~400"
 
