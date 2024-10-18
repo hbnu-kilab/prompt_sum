@@ -159,11 +159,16 @@ def do_eval_meeting_summary(args, promptor, json_lst, sum_type='total_summary'):
 
 def abstractive_summary(json_lst, aug_ids_lst, ex_ids_lst, sum_type="total_summary"):
     src_lst, sum_lst = [], []
+    if sum_type == "total_summary":
+        asum_type = "total_asummary"
+    elif sum_type == "topic_summary":
+        asum_type = "topic_asummary"
+
     for i, (ori, aug_ids, ex_ids) in tqdm(enumerate(zip(json_lst, aug_ids_lst, ex_ids_lst)), total=len(json_lst)):
         # make dialogue with sent_id
         dialogue = ori['dialogue']
         dialogue_dict = {v['sentence_id']: v for v in dialogue}
-        total_asummary = ori[sum_type][0][sum_type]
+        total_asummary = ori[sum_type][0][asum_type]
 
         ex_dial_str = ' '.join([dialogue_dict[ex_id].get("sentence").replace('n/', '').replace('o/', '').strip()
                                  for ex_id in ex_ids])
@@ -179,12 +184,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-rd", "--root_dir", default="/kilab/data/etri", dest="root_dir") 
     parser.add_argument("-dt", "--data_types", nargs='+', default=["timbel", "datamaker-2023-all"], dest="data_types", help="--data_types timbel datamaker-2023-all", type=str) 
+    parser.add_argument("-st", "--summary_types", nargs='+', default=["topic_summary", "total_summary"], dest="summary_types", help="--summary_types topic_summary", type=str) 
     parser.add_argument("-d", "--data_dir", default="summarization/ko", dest="data_dir")
     parser.add_argument("-s", "--save_dir", default="./result/etri", dest="save_dir") 
     parser.add_argument("-m", "--model_type", default="gpt-4o-mini", dest="model_type", help="model_type: [gpt-4o-mini, gpt-4-turbo, gemma2, exaone]")
     # parser.add_argument("-cda", "--do_cda", dest="do_cda", action="store_true")
     args = parser.parse_args()
 
+    sum_type = args.summary_type
     promptor = load_model(args)
 
     # metric = evaluate.combine(["bleu", "rouge", "meteor"])
@@ -196,9 +203,9 @@ def main():
         data_path = Path(args.root_dir) / args.data_dir / data_type / "test"
         data_dir_list, json_lst  = load_data(data_path)
 
-        aug_ids_lst, ex_ids_lst = do_eval_meeting_summary(args, promptor, json_lst)
+        aug_ids_lst, ex_ids_lst = do_eval_meeting_summary(args, promptor, json_lst, sum_type)
 
-        src_lst, sum_lst = abstractive_summary(json_lst, aug_ids_lst, ex_ids_lst)
+        src_lst, sum_lst = abstractive_summary(json_lst, aug_ids_lst, ex_ids_lst, sum_type)
 
         baseline(args.model_type, src_lst, sum_lst, sum_range, metric, promptor)
 
