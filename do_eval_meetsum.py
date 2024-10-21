@@ -177,13 +177,16 @@ def abstractive_summary(json_lst, aug_ids_lst, ex_ids_lst, sum_type="total_summa
         # make dialogue with sent_id
         dialogue = ori['dialogue']
         dialogue_dict = {v['sentence_id']: v for v in dialogue}
-        total_asummary = ori[sum_type][0][asum_type]
+        
+        # total_asummary = ori[sum_type][0][asum_type]
+        for t_summary in ori[sum_type]:
+            asummary = t_summary[asum_type]
 
-        ex_dial_str = ' '.join([dialogue_dict[ex_id].get("sentence").replace('n/', '').replace('o/', '').strip()
-                                 for ex_id in ex_ids if ex_id in dialogue_dict])
+            ex_dial_str = ' '.join([dialogue_dict[ex_id].get("sentence").replace('n/', '').replace('o/', '').strip()
+                                    for ex_id in ex_ids if ex_id in dialogue_dict])
 
-        src_lst.append(ex_dial_str)
-        sum_lst.append(total_asummary)
+            src_lst.append(ex_dial_str)
+            sum_lst.append(asummary)
         
     return src_lst, sum_lst
 
