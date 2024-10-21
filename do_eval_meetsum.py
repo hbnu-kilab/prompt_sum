@@ -215,13 +215,17 @@ def main():
         data_path = Path(args.root_dir) / args.data_dir / data_type / "test"
         data_dir_list, json_lst  = load_data(data_path)
 
-        if True:
+        if args.pipeline_method in ['util_llm', 'merge_exs']:
             # use multidyle encoder
             multidyle_config.eval_model_dir = '/kilab/models/summarization/multidyle/encoder/epochs_1--val_26.3946'
             multidyle_data_type = data_type.split('-')[0]
             multidyle_config.test_type = multidyle_data_type
             multidyle_config.dataset = [f'/kilab/data/etri/summarization/ko_ori/{multidyle_data_type}/']
-            multidyle_ex_ids = multidyle_test()
+            if args.summary_types == "total_summary":
+                multidyle_config.data_type = f"{multidyle_data_type}-no_speaker"
+            elif args.summary_types == "topic_summary":
+                multidyle_config.data_type = f"{multidyle_data_type}-onlytotal"
+            multidyle_ex_ids = multidyle_test(multidyle_config)
 
         if args.pipeline_method == 'util_llm':
             aug_ids_lst, ex_ids_lst = do_eval_meeting_summary(args, promptor, json_lst, sum_type, multidyle_ex_ids)
