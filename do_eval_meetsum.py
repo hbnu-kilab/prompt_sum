@@ -201,7 +201,7 @@ def main():
     parser.add_argument("-s", "--save_dir", default="./result/etri", dest="save_dir") 
     parser.add_argument("-m", "--model_type", default="gpt-4o-mini", dest="model_type", help="model_type: [gpt-4o-mini, gpt-4-turbo, gemma2, exaone]")
     # parser.add_argument("-cda", "--do_cda", dest="do_cda", action="store_true")
-    parser.add_argument("-pm", "--pipeline_method", default="only_llm", dest="pipeline_method", help="model_type: [only_llm, util_llm, merge_exs]")
+    parser.add_argument("-pm", "--pipeline_method", default="only_llm", dest="pipeline_method", help="model_type: [only_llm, only_encoder, util_llm, merge_exs]")
     args = parser.parse_args()
 
     sum_type = args.summary_types
@@ -211,7 +211,13 @@ def main():
     # metric = evaluate.combine(["bleu", "rouge", "meteor"])
     metric = rouge_scorer.RougeScorer(["rouge1", "rouge2", "rougeL", "rougeLsum"])
     # tokenizer = AutoTokenizer.from_pretrained("klue/roberta-base")
-    sum_range = "200~400"
+    
+    if args.summary_types == "total_summary":
+        sum_range = "200~400"
+    elif args.summary_types == "topic_total_summary":
+        sum_range = "50~400"
+    elif args.summary_types == "topic_summary":
+        sum_range = "50~100"
 
 
     for data_type in args.data_types:
@@ -235,7 +241,7 @@ def main():
             multidyle_ex_ids = multidyle_test(multidyle_config)
             multidyle_ex_ids = [sorted(inner_lst) for inner_lst in multidyle_ex_ids]
 
-        if args.pipeline_method == 'util_llm':
+        if args.pipeline_method in ['util_llm', 'only_encoder']:
             aug_ids_lst, ex_ids_lst = do_eval_meeting_summary(args, promptor, json_lst, sum_type, multidyle_ex_ids)
         else:
             aug_ids_lst, ex_ids_lst = do_eval_meeting_summary(args, promptor, json_lst, sum_type)
