@@ -241,13 +241,16 @@ def main():
             multidyle_ex_ids = multidyle_test(multidyle_config)
             multidyle_ex_ids = [sorted(inner_lst) for inner_lst in multidyle_ex_ids]
 
-        if args.pipeline_method in ['util_llm', 'only_encoder']:
+        if args.pipeline_method in ['util_llm']:
             aug_ids_lst, ex_ids_lst = do_eval_meeting_summary(args, promptor, json_lst, sum_type, multidyle_ex_ids)
+        elif args.pipeline_method == 'merge_exs':
+            ex_ids_lst = [list(set(n1 + n2)) for n1, n2 in zip(multidyle_ex_ids, ex_ids_lst)]
+            aug_ids_lst = ex_ids_lst
+        elif args.pipeline_method in ['only_encoder']:
+            aug_ids_lst, ex_ids_lst = multidyle_ex_ids, multidyle_ex_ids
         else:
             aug_ids_lst, ex_ids_lst = do_eval_meeting_summary(args, promptor, json_lst, sum_type)
 
-        if args.pipeline_method == 'merge_exs':
-            ex_ids_lst = [list(set(n1 + n2)) for n1, n2 in zip(multidyle_ex_ids, ex_ids_lst)]
 
         src_lst, sum_lst = abstractive_summary(json_lst, aug_ids_lst, ex_ids_lst, sum_type)
 
