@@ -18,7 +18,7 @@ import sys
 sys.path.append('/home/parkce/git-hubs/')
 sys.path.append('/home/parkce/git-hubs/multidyle')
 from multidyle.test_multi_dyle import test as multidyle_test
-from multidyle.MultiDyle.preprocess import config as multidyle_config
+from multidyle.config import config as multidyle_config
 
 
 
