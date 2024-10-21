@@ -18,7 +18,7 @@ import sys
 sys.path.append('/home/parkce/git-hubs/')
 sys.path.append('/home/parkce/git-hubs/multidyle')
 from multidyle.test_multi_dyle import test as multidyle_test
-from multidyle.config import config as multidyle_config
+from multidyle.config import Config 
 
 
 
@@ -216,6 +216,7 @@ def main():
         data_dir_list, json_lst  = load_data(data_path)
 
         if args.pipeline_method in ['util_llm', 'merge_exs']:
+            multidyle_config = Config()
             # use multidyle encoder
             multidyle_data_type = data_type.split('-')[0]
             multidyle_config.eval_model_dir = '/kilab/models/summarization/multidyle/encoder/epochs_1--val_26.3946'
