@@ -74,9 +74,9 @@ def baseline(model_type, src_lst, sum_lst, sum_range, metric, inst_maker, prompt
         for i, (src, sum) in tqdm(enumerate(zip(src_lst, sum_lst)), total=total_len):
             prev_gold_sum = sum_lst[i-1]
             if nshot == 0:
-                instruction = mk_inst_for_summary(src, sum_range)
+                instruction = inst_maker(src, sum_range)
             elif nshot == 1:
-                instruction = mk_inst_for_summary_w_1shot(src, prev_gold_sum)
+                instruction = inst_maker(src, prev_gold_sum)
             
             output_sum = promptor.do_llm(instruction)
 

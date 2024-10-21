@@ -233,6 +233,7 @@ def main():
             elif args.summary_types == "topic_summary":
                 multidyle_config.data_type = f"{multidyle_data_type}-onlytopic"
             multidyle_ex_ids = multidyle_test(multidyle_config)
+            multidyle_ex_ids = [sorted(inner_lst) for inner_lst in multidyle_ex_ids]
 
         if args.pipeline_method == 'util_llm':
             aug_ids_lst, ex_ids_lst = do_eval_meeting_summary(args, promptor, json_lst, sum_type, multidyle_ex_ids)
