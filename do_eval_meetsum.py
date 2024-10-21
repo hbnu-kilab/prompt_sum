@@ -222,6 +222,8 @@ def main():
             multidyle_config.test_type = multidyle_data_type
             multidyle_config.dataset = [f'/kilab/data/etri/summarization/ko_ori/{multidyle_data_type}/']
             if args.summary_types == "total_summary":
+                multidyle_config.data_type = f"{multidyle_data_type}-onlytotal"
+            elif args.summary_types == "topic_total_summary":
                 multidyle_config.data_type = f"{multidyle_data_type}-no_speaker"
             elif args.summary_types == "topic_summary":
                 multidyle_config.data_type = f"{multidyle_data_type}-onlytopic"
