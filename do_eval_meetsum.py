@@ -117,49 +117,49 @@ def do_eval_meeting_summary(args, promptor, json_lst, sum_type='total_summary', 
             topic_type = "topic"
             sentence_ids = 'topic_sentence_ids'
 
+        for total_summary in tqdm(ori[sum_type], total=len(ori[sum_type])):
+            total_topic = total_summary[topic_type]
+            ex_ids = total_summary[sentence_ids] if sentence_ids in total_summary else total_summary['speaker_sentence_ids']
+            topic_cot = promptor.do_llm(f"Let's think step by step for the {total_topic}, 결과는 한국어로 출력해줘.")
+            topic_input = f'Topic: {total_topic}, Sub-topics: {topic_cot}, 이와 관련있는 문장을 모두 찾으시오.'
 
-        total_topic = total_summary[topic_type]
-        ex_ids = total_summary[sentence_ids] if sentence_ids in total_summary else total_summary['speaker_sentence_ids']
-        topic_cot = promptor.do_llm(f"Let's think step by step for the {total_topic}, 결과는 한국어로 출력해줘.")
-        topic_input = f'Topic: {total_topic}, Sub-topics: {topic_cot}, 이와 관련있는 문장을 모두 찾으시오.'
-
-        if multidyle_ex_ids:
-            instruction = mk_inst_exsum_w_exids(dialog_str, topic_input, len(dialogue), int(len(dialogue)*0.3), multidyle_ex_ids[i])
-        else:
-            instruction = mk_inst_exsum_meetsum(dialog_str, topic_input, len(dialogue), int(len(dialogue)*0.3))
-            
-        aug_data = promptor.do_llm(instruction)
-
-        first_aug_ids = postpro_ex_sum(aug_data)
-        if first_aug_ids == []: 
-            print(aug_data)
-            continue
-
-        ###
-        step = 3
-        new_dialogue = []
-        try:
-            for a_id in range(0, len(first_aug_ids), step):
-                # aug_sent_range = range(aug_ids[a_id], aug_ids[a_id+step])
-                end_id = a_id+step-1
-                new_dialogue += dialogue[first_aug_ids[a_id]-1:first_aug_ids[end_id if end_id < len(first_aug_ids)-1 else len(first_aug_ids)-1]-1]
-
-            new_dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in new_dialogue])
-
-            instruction = mk_inst_exsum_meetsum(new_dialog_str, topic_input, new_dialog_str.count('['), 20)
-
+            if multidyle_ex_ids:
+                instruction = mk_inst_exsum_w_exids(dialog_str, topic_input, len(dialogue), int(len(dialogue)*0.3), multidyle_ex_ids[i])
+            else:
+                instruction = mk_inst_exsum_meetsum(dialog_str, topic_input, len(dialogue), int(len(dialogue)*0.3))
+                
             aug_data = promptor.do_llm(instruction)
 
-            sec_aug_ids = postpro_ex_sum(aug_data)
-            if sec_aug_ids == []: 
+            first_aug_ids = postpro_ex_sum(aug_data)
+            if first_aug_ids == []: 
                 print(aug_data)
-                sec_aug_ids = first_aug_ids
-        except:
-            sec_aug_ids = first_aug_ids
+                continue
 
-        ######
-        aug_ids_lst.append(sec_aug_ids)
-        ex_ids_lst.append(ex_ids)
+            ###
+            step = 3
+            new_dialogue = []
+            try:
+                for a_id in range(0, len(first_aug_ids), step):
+                    # aug_sent_range = range(aug_ids[a_id], aug_ids[a_id+step])
+                    end_id = a_id+step-1
+                    new_dialogue += dialogue[first_aug_ids[a_id]-1:first_aug_ids[end_id if end_id < len(first_aug_ids)-1 else len(first_aug_ids)-1]-1]
+
+                new_dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in new_dialogue])
+
+                instruction = mk_inst_exsum_meetsum(new_dialog_str, topic_input, new_dialog_str.count('['), 20)
+
+                aug_data = promptor.do_llm(instruction)
+
+                sec_aug_ids = postpro_ex_sum(aug_data)
+                if sec_aug_ids == []: 
+                    print(aug_data)
+                    sec_aug_ids = first_aug_ids
+            except:
+                sec_aug_ids = first_aug_ids
+
+            ######
+            aug_ids_lst.append(sec_aug_ids)
+            ex_ids_lst.append(ex_ids)
 
     ex_eval(aug_ids_lst, ex_ids_lst)
 
@@ -198,7 +198,7 @@ def main():
     parser.add_argument("-s", "--save_dir", default="./result/etri", dest="save_dir") 
     parser.add_argument("-m", "--model_type", default="gpt-4o-mini", dest="model_type", help="model_type: [gpt-4o-mini, gpt-4-turbo, gemma2, exaone]")
     # parser.add_argument("-cda", "--do_cda", dest="do_cda", action="store_true")
-    parser.add_argument("-pm", "--pipeline_method", default="util_llm", dest="pipeline_method", help="model_type: [util_llm, merge_exs]")
+    parser.add_argument("-pm", "--pipeline_method", default="only_llm", dest="pipeline_method", help="model_type: [only_llm, util_llm, merge_exs]")
     args = parser.parse_args()
 
     sum_type = args.summary_types
