@@ -219,6 +219,7 @@ def main():
             multidyle_config = Config()
             # use multidyle encoder
             multidyle_data_type = data_type.split('-')[0]
+            multidyle_config.retriever_name_or_path = "klue/roberta-large"
             multidyle_config.eval_model_dir = '/kilab/models/summarization/multidyle/encoder/epochs_1--val_26.3946'
             multidyle_config.test_type = multidyle_data_type
             multidyle_config.dataset = [f'/kilab/data/etri/summarization/ko_ori/{multidyle_data_type}/']
