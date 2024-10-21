@@ -224,7 +224,7 @@ def main():
             if args.summary_types == "total_summary":
                 multidyle_config.data_type = f"{multidyle_data_type}-no_speaker"
             elif args.summary_types == "topic_summary":
-                multidyle_config.data_type = f"{multidyle_data_type}-onlytotal"
+                multidyle_config.data_type = f"{multidyle_data_type}-onlytopic"
             multidyle_ex_ids = multidyle_test(multidyle_config)
 
         if args.pipeline_method == 'util_llm':
