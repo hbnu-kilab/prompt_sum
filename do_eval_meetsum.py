@@ -224,7 +224,7 @@ def main():
         data_path = Path(args.root_dir) / args.data_dir / data_type / "test"
         data_dir_list, json_lst  = load_data(data_path)
 
-        if args.pipeline_method in ['util_llm', 'merge_exs']:
+        if args.pipeline_method in ['util_llm', 'merge_exs', 'only_encoder']:
             multidyle_config = Config()
             # use multidyle encoder
             multidyle_data_type = data_type.split('-')[0]
