@@ -375,7 +375,7 @@ def main():
             elif args.pipeline_method in ['only_encoder']:
                 aug_ids_lst = multidyle_ex_ids[i]
             else:
-                aug_ids_lst = do_ext_sum(promptor, topic_input_lst, json_obj)
+                aug_ids_lst = do_ext_sum(promptor, json_obj, topic_input_lst)
 
             # make srouce with extractive summary ids
             src_lst = mk_src_with_exids(json_obj, aug_ids_lst, sum_type)
