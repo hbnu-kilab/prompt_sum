@@ -173,7 +173,7 @@ def do_ext_sum(promptor, ori, topics, multidyle_ex_ids=None):
     dialogue = ori['dialogue']
     dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in dialogue])
     
-    for topic_input in tqdm(topics, total=len(topics)):
+    for i, topic_input in tqdm(enumerate(topics), total=len(topics)):
         # make instruction
         if multidyle_ex_ids:
             instruction = mk_inst_exsum_w_exids(dialog_str, topic_input, len(dialogue), int(len(dialogue)*0.3), multidyle_ex_ids[i])
