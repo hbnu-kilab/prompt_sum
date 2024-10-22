@@ -79,7 +79,7 @@ def baseline(model_type, src_lst, sum_lst, sum_range, metric, inst_maker, prompt
                 instruction = inst_maker(src, prev_gold_sum)
             
             output_sum = "I'm sorry"
-            while "I'm sorry" in output_sum: 
+            while "I'm sorry" in output_sum or "죄송하지만 현재 작업을" in output_sum: 
                 output_sum = promptor.do_llm(instruction)
 
             if nshot == 0:
