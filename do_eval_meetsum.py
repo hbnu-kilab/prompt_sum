@@ -172,14 +172,14 @@ def do_eval_meeting_summary(args, promptor, json_lst, sum_type='total_summary', 
     return aug_ids_lst, ex_ids_lst
 
 
-def abstractive_summary(json_lst, aug_ids_lst, ex_ids_lst, sum_type="total_summary"):
+def mk_src_with_exids(json_lst, aug_ids_lst, sum_type="total_summary"):
     src_lst, sum_lst = [], []
     if sum_type == "total_summary":
         asum_type = "total_asummary"
     elif sum_type == "topic_summary":
         asum_type = "topic_asummary"
 
-    for i, (ori, aug_ids, ex_ids) in tqdm(enumerate(zip(json_lst, aug_ids_lst, ex_ids_lst)), total=len(json_lst)):
+    for i, (ori, aug_ids) in tqdm(enumerate(zip(json_lst, aug_ids_lst)), total=len(json_lst)):
         # make dialogue with sent_id
         dialogue = ori['dialogue']
         dialogue_dict = {v['sentence_id']: v for v in dialogue}
@@ -189,7 +189,7 @@ def abstractive_summary(json_lst, aug_ids_lst, ex_ids_lst, sum_type="total_summa
             asummary = t_summary[asum_type]
 
             ex_dial_str = ' '.join([dialogue_dict[ex_id].get("sentence").replace('n/', '').replace('o/', '').strip()
-                                    for ex_id in ex_ids if ex_id in dialogue_dict])
+                                    for ex_id in aug_ids if ex_id in dialogue_dict])
 
             src_lst.append(ex_dial_str)
             sum_lst.append(asummary)
@@ -261,8 +261,10 @@ def main():
             aug_ids_lst, ex_ids_lst = do_eval_meeting_summary(args, promptor, json_lst, sum_type)
 
 
-        src_lst, sum_lst = abstractive_summary(json_lst, aug_ids_lst, ex_ids_lst, sum_type)
+        # make srouce with extractive summary ids
+        src_lst, sum_lst = mk_src_with_exids(json_lst, aug_ids_lst, sum_type)
 
+        # do abstractive summarization
         baseline(args.model_type, src_lst, sum_lst, sum_range, metric, inst_maker, promptor)
 
 if __name__ == "__main__":
