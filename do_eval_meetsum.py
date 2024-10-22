@@ -368,8 +368,10 @@ def main():
             
             # scoring
             ex_eval(aug_ids_lst, gold_ids_lst)
-            for src, output_sum, gold_sum in zip(src_lst, tokenized_output_sum_lst, tokenized_gold_sum_lst):
-                score_dict = gather_rouge(gold_sum, output_sum, scores_dict, metric)
+            for src, output_sum, gold_sum, tok_output_sum, tok_gold_sum in zip(src_lst, output_sum_lst, gold_sum_lst, tokenized_output_sum_lst, tokenized_gold_sum_lst):
+                tok_output_sum = tok_output_sum.replace('##', '')
+                tok_gold_sum = tok_gold_sum.replace('##', '')
+                score_dict = gather_rouge(tok_output_sum, tok_gold_sum, scores_dict, metric)
 
                 # print
                 # evaluation for extractive summary 
