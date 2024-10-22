@@ -129,7 +129,10 @@ def do_eval_meeting_summary(args, promptor, json_lst, sum_type='total_summary', 
             else:
                 instruction = mk_inst_exsum_meetsum(dialog_str, topic_input, len(dialogue), int(len(dialogue)*0.3))
                 
-            aug_data = promptor.do_llm(instruction)
+            aug_data = "I'm sorry"
+            while "I'm sorry" in aug_data or "죄송" in aug_data:
+                aug_data = promptor.do_llm(instruction)
+
 
             first_aug_ids = postpro_ex_sum(aug_data)
             if first_aug_ids == []: 
@@ -149,7 +152,9 @@ def do_eval_meeting_summary(args, promptor, json_lst, sum_type='total_summary', 
 
                 instruction = mk_inst_exsum_meetsum(new_dialog_str, topic_input, new_dialog_str.count('['), 20)
 
-                aug_data = promptor.do_llm(instruction)
+                aug_data = "I'm sorry"
+                while "I'm sorry" in aug_data or "죄송" in aug_data:
+                    aug_data = promptor.do_llm(instruction)
 
                 sec_aug_ids = postpro_ex_sum(aug_data)
                 if sec_aug_ids == []: 
