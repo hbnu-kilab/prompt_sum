@@ -72,6 +72,7 @@ def mk_inst_for_meeting_summary(sent, sum_range="100~400"):
                 주어진 글에 대해서 다음 조건을 지켜줘. \
                 1) delimiter (구두점 및 구분자 .)로 끊지말고, 2) [원문] 길이에 비례하여 무조건 한 문장으로 요약해줘 길이는 {sum_range} 글자 사이로. 3) 시간 정보(날짜, 요일 등)는 꼭 포함해서, 4) 말투는 존댓말 쓰지말고, 입력 원문의 말투를 가져와. \
                 입력 문단 앞에 [원문]이 주어지고 [요약] 뒤에 너가 요약문을 작성하면 돼. 항상 이 포맷을 잘 지켜주고. \
+                이해하지 못한 내용은 None으로 추출해줘. \
                 [원문]: {sent} \n [요약]: ".split())
 
 # def mk_inst_for_counterfactual_summary(sent):
