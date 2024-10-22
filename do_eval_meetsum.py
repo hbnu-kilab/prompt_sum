@@ -190,6 +190,8 @@ def do_ext_sum(promptor, ori, topics, multidyle_ex_id=None):
             print(aug_data)
             continue
 
+        ret_aug_ids = first_aug_ids
+
         ###
         flag = True
         if flag:
@@ -215,9 +217,11 @@ def do_ext_sum(promptor, ori, topics, multidyle_ex_id=None):
                     sec_aug_ids = first_aug_ids
             except:
                 sec_aug_ids = first_aug_ids
+            
+            ret_aug_ids = sec_aug_ids
         ######
 
-        aug_ids_lst.append(sec_aug_ids)
+        aug_ids_lst.append(ret_aug_ids)
 
     return aug_ids_lst
 
