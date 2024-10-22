@@ -259,7 +259,7 @@ def do_abs_sum(src_lst, topic_lst, summary_sample, sum_range, inst_maker, prompt
     for i, (src, topic) in tqdm(enumerate(zip(src_lst, topic_lst)), total=total_len, desc="do_abs_sum"):
         # e_total_len = len(srcs)
         # for src, topic in tqdm(enumerate(zip(srcs, topics)), total=e_total_len):
-        instruction = inst_maker(src, sum_range)
+        instruction = inst_maker(src, topic, summary_sample, sum_range)
         
         output_sum = "I'm sorry"
         while "None" in output_sum or "I'm sorry" in output_sum or "죄송하지만 현재 작업을" in output_sum \

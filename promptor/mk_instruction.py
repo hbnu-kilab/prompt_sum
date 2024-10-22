@@ -67,7 +67,7 @@ def mk_inst_for_counterfactual_summary_en(sent):
 # 입력 문단 앞에 [원문]이 주어지고 [요약] 뒤에 너가 요약문을 작성하면 돼. 항상 이 포맷을 잘 지켜주고.
 # [원문]: {sent} \n [요약]: """
 
-def mk_inst_for_meeting_summary(sent, sum_range="100~400"):
+def mk_inst_for_meeting_summary(sent, topic, sum_sample, sum_range="100~400"):
     return ' '.join(f"너는 정말 똑똑한 친구이고 요약을 정말 잘 해. 전체 맥락에서 주요한 내용만 잘 찾아서 요약해야 해. \
                 주어진 글에 대해서 다음 조건을 지켜줘. \
                 1) 요약문의 길이는 {sum_range} 글자 사이로. 2) 시간 정보(날짜, 요일 등)는 꼭 포함해서, 3) 말투는 존댓말 쓰지말고, 입력 원문의 말투를 가져와. \
