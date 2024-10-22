@@ -342,7 +342,8 @@ def main():
         all_aug_ids_lst, all_gold_ids_lst = [], []
         for json_obj in tqdm(json_lst, total=len(json_lst), desc="json loop"):
             # get topic or make topic-CoT
-            topic_input_lst = mk_topic(promptor, json_obj, sum_type)
+            use_cot = True
+            topic_input_lst = mk_topic(promptor, json_obj, use_cot, sum_type)
 
             # get gold extractive and abstractive summary
             gold_ids_lst = get_gold_ex_sum(json_obj, sum_type)
