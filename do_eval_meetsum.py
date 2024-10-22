@@ -386,7 +386,7 @@ def main():
             all_gold_ids_lst.append(gold_ids_lst)
             i += 1
 
-        ex_eval(aug_ids_lst, gold_ids_lst)
+        ex_eval(all_aug_ids_lst, all_gold_ids_lst)
         avg_rouge(scores_dict, total_len)
         print_rouge(scores_dict)
 
