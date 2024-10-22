@@ -296,8 +296,8 @@ def main():
 
     sum_type = args.summary_types
     promptor = load_model(args)
-    inst_maker = mk_inst_for_meeting_summary
-    # inst_maker = mk_inst_for_meeting_summary_new
+    # inst_maker = mk_inst_for_meeting_summary
+    inst_maker = mk_inst_for_meeting_summary_new
     # mk_inst_for_summary
 
     # metric = evaluate.combine(["bleu", "rouge", "meteor"])
