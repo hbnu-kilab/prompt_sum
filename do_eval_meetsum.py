@@ -382,8 +382,8 @@ def main():
                 print(f"Output summary: {output_sum}")
                 print(f"Gold Output summary: {gold_sum}\n\n\n")
 
-            all_aug_ids_lst.append(aug_ids_lst)
-            all_gold_ids_lst.append(gold_ids_lst)
+            all_aug_ids_lst += aug_ids_lst
+            all_gold_ids_lst += gold_ids_lst
             i += 1
 
         ex_eval(all_aug_ids_lst, all_gold_ids_lst)
