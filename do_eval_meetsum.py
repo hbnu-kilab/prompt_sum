@@ -361,7 +361,7 @@ def main():
             src_lst = mk_src_with_exids(json_obj, aug_ids_lst, sum_type)
 
             # do abstractive summarization
-            output_sum_lst, tokenized_output_sum_lst = do_abs_sum(src_lst, topic_input_lst, summary_sample, sum_range, metric, inst_maker, promptor)
+            output_sum_lst, tokenized_output_sum_lst = do_abs_sum(src_lst, topic_input_lst, summary_sample, sum_range, inst_maker, promptor)
             total_len += len(src_lst)
             
             # scoring
