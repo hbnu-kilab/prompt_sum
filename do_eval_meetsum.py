@@ -138,7 +138,7 @@ def mk_topic(promptor, ori, use_cot, sum_type='total_summary'):
     elif sum_type == "topic_summary":
         topic_type = "topic"
 
-    for summary in tqdm(ori[sum_type], total=len(ori[sum_type])):
+    for summary in tqdm(ori[sum_type], total=len(ori[sum_type]), desc="mk_topic"):
         topic = summary[topic_type]
         if use_cot:
             topic_cot = promptor.do_llm(f"Let's think step by step for the {topic}, 결과는 한국어로 출력해줘.")
