@@ -102,9 +102,35 @@ def ex_eval(output_doc_ids, oracle_doc_ids):
     print("-------------------------")
 
 
-def do_eval_meeting_summary(args, promptor, json_lst, sum_type='total_summary', multidyle_ex_ids=None):
-    aug_ids_lst, ex_ids_lst = [], []
+def mk_topic(promptor, json_lst, use_cot, sum_type='total_summary'):
+    topic_input_lst = []
     for i, ori in tqdm(enumerate(json_lst), total=len(json_lst)):
+        # gold data
+        total_summary = ori[sum_type][0]
+        if sum_type == "total_summary":
+            topic_type = "total_topic"
+        elif sum_type == "topic_summary":
+            topic_type = "topic"
+
+        topic_input_for_json = []
+        for summary in tqdm(ori[sum_type], total=len(ori[sum_type])):
+            topic = summary[topic_type]
+            if use_cot:
+                topic_cot = promptor.do_llm(f"Let's think step by step for the {topic}, 결과는 한국어로 출력해줘.")
+                topic_input = f'Topic: {topic}, Sub-topics: {topic_cot}, 이와 관련있는 문장을 모두 찾으시오.'
+            else:
+                topic_input = topic
+
+            topic_input_for_json.append(topic_input)
+        topic_input_lst.append(topic_input_for_json)
+
+    return topic_input_lst
+
+
+
+def do_eval_meeting_summary(args, promptor, json_lst, topic_lst, sum_type='total_summary', multidyle_ex_ids=None):
+    aug_ids_lst, gold_ids_lst = [], []
+    for i, (ori, topics) in tqdm(enumerate(zip(json_lst, topic_lst)), total=len(json_lst)):
         # make dialogue with sent_id
         dialogue = ori['dialogue']
         dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in dialogue])
@@ -112,27 +138,23 @@ def do_eval_meeting_summary(args, promptor, json_lst, sum_type='total_summary', 
         # gold data
         total_summary = ori[sum_type][0]
         if sum_type == "total_summary":
-            topic_type = "total_topic"
             sentence_ids = 'total_sentence_ids'
         elif sum_type == "topic_summary":
-            topic_type = "topic"
             sentence_ids = 'topic_sentence_ids'
 
-        for total_summary in tqdm(ori[sum_type], total=len(ori[sum_type])):
-            total_topic = total_summary[topic_type]
-            ex_ids = total_summary[sentence_ids] if sentence_ids in total_summary else total_summary['speaker_sentence_ids']
-            topic_cot = promptor.do_llm(f"Let's think step by step for the {total_topic}, 결과는 한국어로 출력해줘.")
-            topic_input = f'Topic: {total_topic}, Sub-topics: {topic_cot}, 이와 관련있는 문장을 모두 찾으시오.'
+        for total_summary, topic_input in tqdm(zip(ori[sum_type], topics), total=len(ori[sum_type])):
+            gold_ids = total_summary[sentence_ids] if sentence_ids in total_summary else total_summary['speaker_sentence_ids']
 
+            # make instruction
             if multidyle_ex_ids:
                 instruction = mk_inst_exsum_w_exids(dialog_str, topic_input, len(dialogue), int(len(dialogue)*0.3), multidyle_ex_ids[i])
             else:
                 instruction = mk_inst_exsum_meetsum(dialog_str, topic_input, len(dialogue), int(len(dialogue)*0.3))
                 
+            # extractive summary using llm
             aug_data = "I'm sorry"
-            while "I'm sorry" in aug_data or "죄송" in aug_data:
+            while "I'm sorry" in aug_data or "죄송" in aug_data or 'Topic]과 관련된 문장' in aug_data:
                 aug_data = promptor.do_llm(instruction)
-
 
             first_aug_ids = postpro_ex_sum(aug_data)
             if first_aug_ids == []: 
@@ -153,7 +175,7 @@ def do_eval_meeting_summary(args, promptor, json_lst, sum_type='total_summary', 
                 instruction = mk_inst_exsum_meetsum(new_dialog_str, topic_input, new_dialog_str.count('['), 20)
 
                 aug_data = "I'm sorry"
-                while "I'm sorry" in aug_data or "죄송" in aug_data:
+                while "I'm sorry" in aug_data or "죄송" in aug_data or 'Topic]과 관련된 문장' in aug_data:
                     aug_data = promptor.do_llm(instruction)
 
                 sec_aug_ids = postpro_ex_sum(aug_data)
@@ -162,14 +184,13 @@ def do_eval_meeting_summary(args, promptor, json_lst, sum_type='total_summary', 
                     sec_aug_ids = first_aug_ids
             except:
                 sec_aug_ids = first_aug_ids
-
             ######
+
             aug_ids_lst.append(sec_aug_ids)
-            ex_ids_lst.append(ex_ids)
+            gold_ids_lst.append(gold_ids)
 
-    ex_eval(aug_ids_lst, ex_ids_lst)
 
-    return aug_ids_lst, ex_ids_lst
+    return aug_ids_lst, gold_ids_lst
 
 
 def mk_src_with_exids(json_lst, aug_ids_lst, sum_type="total_summary"):
@@ -250,16 +271,21 @@ def main():
             multidyle_ex_ids = multidyle_test(multidyle_config)
             multidyle_ex_ids = [sorted(inner_lst) for inner_lst in multidyle_ex_ids]
 
+        topic_input_lst = mk_topic(promptor, json_lst, sum_type)
+
         if args.pipeline_method in ['util_llm']:
-            aug_ids_lst, ex_ids_lst = do_eval_meeting_summary(args, promptor, json_lst, sum_type, multidyle_ex_ids)
+            aug_ids_lst, gold_ids_lst = do_eval_meeting_summary(args, promptor, json_lst, topic_input_lst, sum_type, multidyle_ex_ids)
         elif args.pipeline_method == 'merge_exs':
-            ex_ids_lst = [list(set(n1 + n2)) for n1, n2 in zip(multidyle_ex_ids, ex_ids_lst)]
+            aug_ids_lst, gold_ids_lst = do_eval_meeting_summary(args, promptor, json_lst, topic_input_lst, sum_type, multidyle_ex_ids)
+            ex_ids_lst = [list(set(n1 + n2)) for n1, n2 in zip(multidyle_ex_ids, aug_ids_lst)]
             aug_ids_lst = ex_ids_lst
         elif args.pipeline_method in ['only_encoder']:
-            aug_ids_lst, ex_ids_lst = multidyle_ex_ids, multidyle_ex_ids
+            aug_ids_lst, gold_ids_lst = multidyle_ex_ids, multidyle_ex_ids
         else:
-            aug_ids_lst, ex_ids_lst = do_eval_meeting_summary(args, promptor, json_lst, sum_type)
+            aug_ids_lst, gold_ids_lst = do_eval_meeting_summary(args, promptor, topic_input_lst, json_lst, sum_type)
 
+        # evaluation for extractive summary 
+        ex_eval(aug_ids_lst, gold_ids_lst)
 
         # make srouce with extractive summary ids
         src_lst, sum_lst = mk_src_with_exids(json_lst, aug_ids_lst, sum_type)
