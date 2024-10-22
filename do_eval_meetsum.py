@@ -5,12 +5,14 @@ from loader import DataLoader, JsonInDirLoader, SummaryLoader, SummaryETRILoader
 from promptor import Promptor, ExaonePromptor, Gemma2Promptor, ChatGPTPromptor
 
 from promptor.mk_instruction import mk_inst_exsum_meetsum, mk_inst_for_meeting_summary, \
-                                    mk_inst_exsum_w_exids, mk_inst_for_summary
+                                    mk_inst_exsum_w_exids, mk_inst_for_summary, \
+                                    mk_inst_for_meeting_summary_new
 
 import torch
 import argparse
+from transformers import AutoTokenizer
 
-from do_abs_sum import baseline
+from eval.clean_text import postprocess_text, clean_data_ko
 
 # import evaluate
 from korouge_score import rouge_scorer
@@ -21,6 +23,7 @@ sys.path.append('/home/parkce/git-hubs/multidyle')
 from multidyle.test_multi_dyle import test as multidyle_test
 from multidyle.config import Config 
 
+tokenizer = AutoTokenizer.from_pretrained("klue/roberta-base")
 
 
 def load_data(data_dir):
@@ -102,120 +105,178 @@ def ex_eval(output_doc_ids, oracle_doc_ids):
     print("-------------------------")
 
 
-def mk_topic(promptor, json_lst, use_cot, sum_type='total_summary'):
+def avg_rouge(scores_dict, total_len):
+    for k, v in scores_dict.items():
+        for k_el, v_el in v.items():
+            scores_dict[k][k_el] = scores_dict[k][k_el] / total_len * 100
+
+def print_rouge(scores_dict):
+    for k, v in scores_dict.items():
+        print(f"{k}: {v}")
+
+def gather_rouge(ref, pred, scores_dict, metric):
+    score_dict = metric.score(ref, pred)
+
+    for k, v in score_dict.items():
+        if k in scores_dict:
+            scores_dict[k]['precision'] += score_dict[k].precision
+            scores_dict[k]['recall'] += score_dict[k].recall
+            scores_dict[k]['fmeasure'] += score_dict[k].fmeasure
+        else:
+            scores_dict[k] = {}
+            scores_dict[k]['precision'] = score_dict[k].precision
+            scores_dict[k]['recall'] = score_dict[k].recall
+            scores_dict[k]['fmeasure'] = score_dict[k].fmeasure
+        
+    return score_dict
+
+
+def mk_topic(promptor, ori, use_cot, sum_type='total_summary'):
     topic_input_lst = []
-    for i, ori in tqdm(enumerate(json_lst), total=len(json_lst)):
-        # gold data
-        total_summary = ori[sum_type][0]
-        if sum_type == "total_summary":
-            topic_type = "total_topic"
-        elif sum_type == "topic_summary":
-            topic_type = "topic"
+    if sum_type == "total_summary":
+        topic_type = "total_topic"
+    elif sum_type == "topic_summary":
+        topic_type = "topic"
 
-        topic_input_for_json = []
-        for summary in tqdm(ori[sum_type], total=len(ori[sum_type])):
-            topic = summary[topic_type]
-            if use_cot:
-                topic_cot = promptor.do_llm(f"Let's think step by step for the {topic}, 결과는 한국어로 출력해줘.")
-                topic_input = f'Topic: {topic}, Sub-topics: {topic_cot}, 이와 관련있는 문장을 모두 찾으시오.'
-            else:
-                topic_input = topic
+    for summary in tqdm(ori[sum_type], total=len(ori[sum_type])):
+        topic = summary[topic_type]
+        if use_cot:
+            topic_cot = promptor.do_llm(f"Let's think step by step for the {topic}, 결과는 한국어로 출력해줘.")
+            topic_input = f'Topic: {topic}, Sub-topics: {topic_cot}, 이와 관련있는 문장을 모두 찾으시오.'
+        else:
+            topic_input = topic
 
-            topic_input_for_json.append(topic_input)
-        topic_input_lst.append(topic_input_for_json)
+        topic_input_lst.append(topic_input)
 
     return topic_input_lst
 
 
+def get_gold_ex_sum(ori, sum_type='total_summary'):
+    # gold data
+    total_summary = ori[sum_type][0]
+    if sum_type == "total_summary":
+        sentence_ids = 'total_sentence_ids'
+    elif sum_type == "topic_summary":
+        sentence_ids = 'topic_sentence_ids'
 
-def do_eval_meeting_summary(args, promptor, json_lst, topic_lst, sum_type='total_summary', multidyle_ex_ids=None):
-    aug_ids_lst, gold_ids_lst = [], []
-    for i, (ori, topics) in tqdm(enumerate(zip(json_lst, topic_lst)), total=len(json_lst)):
+    gold_ids_lst = []
+    for total_summary in tqdm(ori[sum_type], total=len(ori[sum_type])):
+        gold_ids = total_summary[sentence_ids] if sentence_ids in total_summary else total_summary['speaker_sentence_ids']
+        gold_ids_lst.append(gold_ids)
+
+    return gold_ids_lst
+
+def do_ext_sum(promptor, ori, topics, multidyle_ex_ids=None):
+    aug_ids_lst = []
+    # for i, (ori, topics) in tqdm(enumerate(zip(json_lst, topic_lst)), total=len(json_lst)):
         # make dialogue with sent_id
-        dialogue = ori['dialogue']
-        dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in dialogue])
-        
-        # gold data
-        total_summary = ori[sum_type][0]
-        if sum_type == "total_summary":
-            sentence_ids = 'total_sentence_ids'
-        elif sum_type == "topic_summary":
-            sentence_ids = 'topic_sentence_ids'
+    dialogue = ori['dialogue']
+    dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in dialogue])
+    
+    for topic_input in tqdm(topics, total=len(topics)):
+        # make instruction
+        if multidyle_ex_ids:
+            instruction = mk_inst_exsum_w_exids(dialog_str, topic_input, len(dialogue), int(len(dialogue)*0.3), multidyle_ex_ids[i])
+        else:
+            instruction = mk_inst_exsum_meetsum(dialog_str, topic_input, len(dialogue), int(len(dialogue)*0.3))
+            
+        # extractive summary using llm
+        aug_data = "I'm sorry"
+        while "I'm sorry" in aug_data or "죄송" in aug_data or 'Topic]과 관련된 문장' in aug_data:
+            aug_data = promptor.do_llm(instruction)
 
-        for total_summary, topic_input in tqdm(zip(ori[sum_type], topics), total=len(ori[sum_type])):
-            gold_ids = total_summary[sentence_ids] if sentence_ids in total_summary else total_summary['speaker_sentence_ids']
+        first_aug_ids = postpro_ex_sum(aug_data)
+        if first_aug_ids == []: 
+            print(aug_data)
+            continue
 
-            # make instruction
-            if multidyle_ex_ids:
-                instruction = mk_inst_exsum_w_exids(dialog_str, topic_input, len(dialogue), int(len(dialogue)*0.3), multidyle_ex_ids[i])
-            else:
-                instruction = mk_inst_exsum_meetsum(dialog_str, topic_input, len(dialogue), int(len(dialogue)*0.3))
-                
-            # extractive summary using llm
+        ###
+        step = 3
+        new_dialogue = []
+        try:
+            for a_id in range(0, len(first_aug_ids), step):
+                # aug_sent_range = range(aug_ids[a_id], aug_ids[a_id+step])
+                end_id = a_id+step-1
+                new_dialogue += dialogue[first_aug_ids[a_id]-1:first_aug_ids[end_id if end_id < len(first_aug_ids)-1 else len(first_aug_ids)-1]-1]
+
+            new_dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in new_dialogue])
+
+            instruction = mk_inst_exsum_meetsum(new_dialog_str, topic_input, new_dialog_str.count('['), 20)
+
             aug_data = "I'm sorry"
             while "I'm sorry" in aug_data or "죄송" in aug_data or 'Topic]과 관련된 문장' in aug_data:
                 aug_data = promptor.do_llm(instruction)
 
-            first_aug_ids = postpro_ex_sum(aug_data)
-            if first_aug_ids == []: 
+            sec_aug_ids = postpro_ex_sum(aug_data)
+            if sec_aug_ids == []: 
                 print(aug_data)
-                continue
-
-            ###
-            step = 3
-            new_dialogue = []
-            try:
-                for a_id in range(0, len(first_aug_ids), step):
-                    # aug_sent_range = range(aug_ids[a_id], aug_ids[a_id+step])
-                    end_id = a_id+step-1
-                    new_dialogue += dialogue[first_aug_ids[a_id]-1:first_aug_ids[end_id if end_id < len(first_aug_ids)-1 else len(first_aug_ids)-1]-1]
-
-                new_dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in new_dialogue])
-
-                instruction = mk_inst_exsum_meetsum(new_dialog_str, topic_input, new_dialog_str.count('['), 20)
-
-                aug_data = "I'm sorry"
-                while "I'm sorry" in aug_data or "죄송" in aug_data or 'Topic]과 관련된 문장' in aug_data:
-                    aug_data = promptor.do_llm(instruction)
-
-                sec_aug_ids = postpro_ex_sum(aug_data)
-                if sec_aug_ids == []: 
-                    print(aug_data)
-                    sec_aug_ids = first_aug_ids
-            except:
                 sec_aug_ids = first_aug_ids
-            ######
+        except:
+            sec_aug_ids = first_aug_ids
+        ######
 
-            aug_ids_lst.append(sec_aug_ids)
-            gold_ids_lst.append(gold_ids)
+        aug_ids_lst.append(sec_aug_ids)
+
+    return aug_ids_lst
 
 
-    return aug_ids_lst, gold_ids_lst
-
-
-def mk_src_with_exids(json_lst, aug_ids_lst, sum_type="total_summary"):
-    src_lst, sum_lst = [], []
+def get_gold_asum(ori, sum_type="total_summary"):
     if sum_type == "total_summary":
         asum_type = "total_asummary"
     elif sum_type == "topic_summary":
         asum_type = "topic_asummary"
 
-    for i, (ori, aug_ids) in tqdm(enumerate(zip(json_lst, aug_ids_lst)), total=len(json_lst)):
+    gold_sum_lst = [t_sum[asum_type] for t_sum in ori[sum_type]]
+    tokenized_sum_lst = [' '.join(tokenizer.tokenize(sum)) for sum in gold_sum_lst]
+
+    return gold_sum_lst, tokenized_sum_lst
+
+def mk_src_with_exids(ori, aug_ids_lst, sum_type="total_summary"):
+    src_lst = []
+
+    # for i, (ori, aug_ids) in tqdm(enumerate(zip(json_lst, aug_ids_lst)), total=len(json_lst)):
         # make dialogue with sent_id
-        dialogue = ori['dialogue']
-        dialogue_dict = {v['sentence_id']: v for v in dialogue}
+    dialogue = ori['dialogue']
+    dialogue_dict = {v['sentence_id']: v for v in dialogue}
+    
+    # tmp_src, tmp_sum = [], []
+    # total_asummary = ori[sum_type][0][asum_type]
+    for aug_ids in aug_ids_lst:
+        ex_dial_str = ' '.join([dialogue_dict[ex_id].get("sentence").replace('n/', '').replace('o/', '').strip()
+                                for ex_id in aug_ids if ex_id in dialogue_dict])
+        src_lst.append(ex_dial_str)
+    # src_lst.append(tmp_src)
+    # gold_sum_lst.append(tmp_sum)
         
-        # total_asummary = ori[sum_type][0][asum_type]
-        for t_summary in ori[sum_type]:
-            asummary = t_summary[asum_type]
+    return src_lst
 
-            ex_dial_str = ' '.join([dialogue_dict[ex_id].get("sentence").replace('n/', '').replace('o/', '').strip()
-                                    for ex_id in aug_ids if ex_id in dialogue_dict])
+def do_abs_sum(src_lst, topic_lst, summary_sample, sum_range, inst_maker, promptor):
+    output_sum_lst, tokenized_output_sum_lst = [], []
+    total_len = len(src_lst)
 
-            src_lst.append(ex_dial_str)
-            sum_lst.append(asummary)
-        
-    return src_lst, sum_lst
+    for i, (srcs, topics) in tqdm(enumerate(zip(src_lst, topic_lst)), total=total_len):
+        e_total_len = len(srcs)
+        for src, topic in tqdm(enumerate(zip(srcs, topics)), total=e_total_len):
+            instruction = inst_maker(src, sum_range)
+            
+            output_sum = "I'm sorry"
+            while "None" in output_sum or "I'm sorry" in output_sum or "죄송하지만 현재 작업을" in output_sum \
+                or "죄송해, 내가 널 이해하지 못했어" in output_sum or "죄송하지만 이 요청은 내부 정책에" in output_sum \
+                    or "죄송해요, 미완성된 원문은 도움을" in output_sum or "죄송하지만 글자 수가 너무 많아서" in output_sum \
+                    or "죄송하지만 주어진 텍스트를 기반으로" in output_sum: 
+                output_sum = promptor.do_llm(instruction)
+
+            output_sum = output_sum.split("[요약]")[-1].replace('\n', ' ')
+
+            output_sum = clean_data_ko(output_sum)
+            # output_sum, sum = postprocess_text(output_sum, sum)
+
+            output_sum_lst.append(output_sum)
+            tokenized_output_sum = ' '.join(tokenizer.tokenize(output_sum))
+            tokenized_output_sum_lst.append(tokenized_output_sum)
+            
+
+    return output_sum_lst, tokenized_output_sum_lst
 
 
 
@@ -234,11 +295,13 @@ def main():
     sum_type = args.summary_types
     promptor = load_model(args)
     inst_maker = mk_inst_for_meeting_summary
+    # inst_maker = mk_inst_for_meeting_summary_new
     # mk_inst_for_summary
 
     # metric = evaluate.combine(["bleu", "rouge", "meteor"])
     metric = rouge_scorer.RougeScorer(["rouge1", "rouge2", "rougeL", "rougeLsum"])
 
+    summary_sample = "AI와 챗GPT와 같은 기술은 직업 변화와 교육 방향성에 영향을 미친다. 챗GPT의 발달로 일정한 패턴으로 움직이는 직군이나 부가가치가 높은 일이 먼저 대체될 것이다. 챗GPT에 대한 기대가 높지만 현재는 현실적인 한계로 인해 부정적인 시각도 많다. 인공지능도 경험과 데이터 축적으로 인간의 판단과 유사한 정확도를 갖출 수 있을 것이며 점차 인공지능에 대한 인식이 긍정적으로 변화할 것이다. 기술이 진화됨에 따라 그에 맞는 능력을 갖추고 윤리적인 부분들을 바탕으로 최대한 활용할 수 있는 방향으로 나아가야 한다."
 
     for data_type in args.data_types:
         data_path = Path(args.root_dir) / args.data_dir / data_type / "test"
@@ -271,27 +334,52 @@ def main():
             multidyle_ex_ids = multidyle_test(multidyle_config)
             multidyle_ex_ids = [sorted(inner_lst) for inner_lst in multidyle_ex_ids]
 
-        topic_input_lst = mk_topic(promptor, json_lst, sum_type)
 
-        if args.pipeline_method in ['util_llm']:
-            aug_ids_lst, gold_ids_lst = do_eval_meeting_summary(args, promptor, json_lst, topic_input_lst, sum_type, multidyle_ex_ids)
-        elif args.pipeline_method == 'merge_exs':
-            aug_ids_lst, gold_ids_lst = do_eval_meeting_summary(args, promptor, json_lst, topic_input_lst, sum_type, multidyle_ex_ids)
-            ex_ids_lst = [list(set(n1 + n2)) for n1, n2 in zip(multidyle_ex_ids, aug_ids_lst)]
-            aug_ids_lst = ex_ids_lst
-        elif args.pipeline_method in ['only_encoder']:
-            aug_ids_lst, gold_ids_lst = multidyle_ex_ids, multidyle_ex_ids
-        else:
-            aug_ids_lst, gold_ids_lst = do_eval_meeting_summary(args, promptor, topic_input_lst, json_lst, sum_type)
+        total_len = 0
+        scores_dict = {}
+        for i, json_obj in tqdm(enumerate(json_lst), total=len(json_lst)):
+            # get topic or make topic-CoT
+            topic_input_lst = mk_topic(promptor, json_obj, sum_type)
 
-        # evaluation for extractive summary 
-        ex_eval(aug_ids_lst, gold_ids_lst)
+            # get gold extractive and abstractive summary
+            gold_ids_lst = get_gold_ex_sum(json_obj, sum_type)
+            gold_sum_lst, tokenized_gold_sum_lst = get_gold_asum(json_obj, sum_type)
 
-        # make srouce with extractive summary ids
-        src_lst, sum_lst = mk_src_with_exids(json_lst, aug_ids_lst, sum_type)
+            # do extractive summarization
+            if args.pipeline_method in ['util_llm']:
+                aug_ids_lst = do_ext_sum(promptor, json_obj, topic_input_lst, multidyle_ex_ids)
+            elif args.pipeline_method == 'merge_exs':
+                aug_ids_lst = do_ext_sum(promptor, json_obj, topic_input_lst, multidyle_ex_ids)
+                ex_ids_lst = [list(set(n1 + n2)) for n1, n2 in zip(multidyle_ex_ids, aug_ids_lst)]
+                aug_ids_lst = ex_ids_lst
+            elif args.pipeline_method in ['only_encoder']:
+                aug_ids_lst = multidyle_ex_ids, multidyle_ex_ids
+            else:
+                aug_ids_lst = do_ext_sum(promptor, topic_input_lst, json_obj)
 
-        # do abstractive summarization
-        baseline(args.model_type, src_lst, sum_lst, sum_range, metric, inst_maker, promptor)
+            # make srouce with extractive summary ids
+            src_lst = mk_src_with_exids(json_obj, aug_ids_lst, sum_type)
+
+            # do abstractive summarization
+            output_sum_lst, tokenized_output_sum_lst = do_abs_sum(src_lst, topic_input_lst, summary_sample, sum_range, metric, inst_maker, promptor)
+            total_len += len(src_lst)
+            
+            # scoring
+            for src, aug_ids, gold_ids, output_sum, gold_sum in zip(src_lst, aug_ids_lst, gold_ids_lst, tokenized_output_sum_lst, tokenized_gold_sum_lst):
+                score_dict = gather_rouge(gold_sum, output_sum, scores_dict, metric)
+
+                # print
+                # evaluation for extractive summary 
+                ex_eval(aug_ids, gold_ids)
+                print(score_dict)
+                print()
+                print(f"Input text: {src}")
+                print(f"Output summary: {output_sum}")
+                print(f"Gold Output summary: {gold_sum}\n\n\n")
+
+
+        avg_rouge(scores_dict, total_len)
+        print_rouge(scores_dict)
 
 if __name__ == "__main__":
     main()
