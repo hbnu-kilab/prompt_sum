@@ -212,19 +212,21 @@ def main():
 
     # metric = evaluate.combine(["bleu", "rouge", "meteor"])
     metric = rouge_scorer.RougeScorer(["rouge1", "rouge2", "rougeL", "rougeLsum"])
-    # tokenizer = AutoTokenizer.from_pretrained("klue/roberta-base")
-    
-    if args.summary_types == "total_summary":
-        sum_range = "200~400"
-    elif args.summary_types == "topic_total_summary":
-        sum_range = "50~400"
-    elif args.summary_types == "topic_summary":
-        sum_range = "50~100"
 
 
     for data_type in args.data_types:
         data_path = Path(args.root_dir) / args.data_dir / data_type / "test"
         data_dir_list, json_lst  = load_data(data_path)
+
+        if args.summary_types == "total_summary":
+            if data_type == "timbel":
+                sum_range = "200~400"
+            elif data_type == "datamaker":
+                sum_range = "50~200"
+        elif args.summary_types == "topic_total_summary":
+            sum_range = "50~400"
+        elif args.summary_types == "topic_summary":
+            sum_range = "50~100"
 
         if args.pipeline_method in ['util_llm', 'merge_exs', 'only_encoder']:
             multidyle_config = Config()
