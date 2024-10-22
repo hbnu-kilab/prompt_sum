@@ -182,8 +182,11 @@ def do_ext_sum(promptor, ori, topics, multidyle_ex_id=None):
             
         # extractive summary using llm
         aug_data = "I'm sorry"
+        cnt = 0
         while "I'm sorry" in aug_data or "죄송" in aug_data or 'Topic]과 관련된 문장' in aug_data:
             aug_data = promptor.do_llm(instruction)
+            cnt += 1
+            if cnt > 3: break
 
         first_aug_ids = postpro_ex_sum(aug_data)
         if first_aug_ids == []: 
@@ -208,8 +211,11 @@ def do_ext_sum(promptor, ori, topics, multidyle_ex_id=None):
                 instruction = mk_inst_exsum_meetsum(new_dialog_str, topic_input, new_dialog_str.count('['), 20)
 
                 aug_data = "I'm sorry"
+                cnt = 0
                 while "I'm sorry" in aug_data or "죄송" in aug_data or 'Topic]과 관련된 문장' in aug_data:
                     aug_data = promptor.do_llm(instruction)
+                    cnt += 1
+                    if cnt > 3: break
 
                 sec_aug_ids = postpro_ex_sum(aug_data)
                 if sec_aug_ids == []: 
@@ -266,11 +272,14 @@ def do_abs_sum(src_lst, topic_lst, summary_sample, sum_range, inst_maker, prompt
         instruction = inst_maker(src, topic, summary_sample, sum_range)
         
         output_sum = "I'm sorry"
+        cnt = 0
         while "None" in output_sum or "I'm sorry" in output_sum or "죄송하지만 현재 작업을" in output_sum \
             or "죄송해, 내가 널 이해하지 못했어" in output_sum or "죄송하지만 이 요청은 내부 정책에" in output_sum \
                 or "죄송해요, 미완성된 원문은 도움을" in output_sum or "죄송하지만 글자 수가 너무 많아서" in output_sum \
                 or "죄송하지만 주어진 텍스트를 기반으로" in output_sum or "미안해" in output_sum: 
             output_sum = promptor.do_llm(instruction)
+            cnt += 1
+            if cnt > 3: break
 
         output_sum = output_sum.split("[요약]")[-1].replace('\n', ' ')
 
