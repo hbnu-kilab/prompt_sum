@@ -78,7 +78,8 @@ def baseline(model_type, src_lst, sum_lst, sum_range, metric, inst_maker, prompt
             elif nshot == 1:
                 instruction = inst_maker(src, prev_gold_sum)
             
-            output_sum = promptor.do_llm(instruction)
+            while "I'm sorry" in output_sum: 
+                output_sum = promptor.do_llm(instruction)
 
             if nshot == 0:
                 output_sum = output_sum.split("[요약]")[-1].replace('\n', ' ')

@@ -10,7 +10,7 @@ from promptor.mk_instruction import mk_inst_exsum_meetsum, mk_inst_for_meeting_s
 import torch
 import argparse
 
-from do_ex import baseline
+from do_abs_sum import baseline
 
 # import evaluate
 from korouge_score import rouge_scorer
