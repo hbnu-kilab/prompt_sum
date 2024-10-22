@@ -166,7 +166,7 @@ def get_gold_ex_sum(ori, sum_type='total_summary'):
 
     return gold_ids_lst
 
-def do_ext_sum(promptor, ori, topics, multidyle_ex_ids=None):
+def do_ext_sum(promptor, ori, topics, multidyle_ex_id=None):
     aug_ids_lst = []
     # for i, (ori, topics) in tqdm(enumerate(zip(json_lst, topic_lst)), total=len(json_lst)):
         # make dialogue with sent_id
@@ -175,8 +175,8 @@ def do_ext_sum(promptor, ori, topics, multidyle_ex_ids=None):
     
     for i, topic_input in tqdm(enumerate(topics), total=len(topics), desc="do_ext_sum"):
         # make instruction
-        if multidyle_ex_ids:
-            instruction = mk_inst_exsum_w_exids(dialog_str, topic_input, len(dialogue), int(len(dialogue)*0.3), multidyle_ex_ids[i])
+        if multidyle_ex_id:
+            instruction = mk_inst_exsum_w_exids(dialog_str, topic_input, len(dialogue), int(len(dialogue)*0.3), multidyle_ex_id)
         else:
             instruction = mk_inst_exsum_meetsum(dialog_str, topic_input, len(dialogue), int(len(dialogue)*0.3))
             
@@ -332,12 +332,14 @@ def main():
             elif args.summary_types == "topic_summary":
                 multidyle_config.data_type = f"{multidyle_data_type}-onlytopic"
             multidyle_ex_ids = multidyle_test(multidyle_config)
+
             multidyle_ex_ids = [sorted(inner_lst) for inner_lst in multidyle_ex_ids]
 
 
         total_len = 0
+        i = 0
         scores_dict = {}
-        for i, json_obj in tqdm(enumerate(json_lst), total=len(json_lst), desc="json loop"):
+        for json_obj in tqdm(json_lst, total=len(json_lst), desc="json loop"):
             # get topic or make topic-CoT
             topic_input_lst = mk_topic(promptor, json_obj, sum_type)
 
@@ -347,13 +349,13 @@ def main():
 
             # do extractive summarization
             if args.pipeline_method in ['util_llm']:
-                aug_ids_lst = do_ext_sum(promptor, json_obj, topic_input_lst, multidyle_ex_ids)
+                aug_ids_lst = do_ext_sum(promptor, json_obj, topic_input_lst, multidyle_ex_ids[i])
             elif args.pipeline_method == 'merge_exs':
-                aug_ids_lst = do_ext_sum(promptor, json_obj, topic_input_lst, multidyle_ex_ids)
-                ex_ids_lst = [list(set(n1 + n2)) for n1, n2 in zip(multidyle_ex_ids, aug_ids_lst)]
+                aug_ids_lst = do_ext_sum(promptor, json_obj, topic_input_lst, multidyle_ex_ids[i])
+                ex_ids_lst = [list(set(n1 + n2)) for n1, n2 in zip(multidyle_ex_ids[i], aug_ids_lst)]
                 aug_ids_lst = ex_ids_lst
             elif args.pipeline_method in ['only_encoder']:
-                aug_ids_lst = multidyle_ex_ids, multidyle_ex_ids
+                aug_ids_lst = multidyle_ex_ids[i]
             else:
                 aug_ids_lst = do_ext_sum(promptor, topic_input_lst, json_obj)
 
@@ -377,6 +379,7 @@ def main():
                 print(f"Output summary: {output_sum}")
                 print(f"Gold Output summary: {gold_sum}\n\n\n")
 
+            i += 1
 
         avg_rouge(scores_dict, total_len)
         print_rouge(scores_dict)
