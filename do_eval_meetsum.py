@@ -339,6 +339,7 @@ def main():
         total_len = 0
         i = 0
         scores_dict = {}
+        all_aug_ids_lst, all_gold_ids_lst = [], []
         for json_obj in tqdm(json_lst, total=len(json_lst), desc="json loop"):
             # get topic or make topic-CoT
             topic_input_lst = mk_topic(promptor, json_obj, sum_type)
@@ -381,8 +382,11 @@ def main():
                 print(f"Output summary: {output_sum}")
                 print(f"Gold Output summary: {gold_sum}\n\n\n")
 
+            all_aug_ids_lst.append(aug_ids_lst)
+            all_gold_ids_lst.append(gold_ids_lst)
             i += 1
 
+        ex_eval(aug_ids_lst, gold_ids_lst)
         avg_rouge(scores_dict, total_len)
         print_rouge(scores_dict)
 
