@@ -160,7 +160,7 @@ def get_gold_ex_sum(ori, sum_type='total_summary'):
         sentence_ids = 'topic_sentence_ids'
 
     gold_ids_lst = []
-    for total_summary in tqdm(ori[sum_type], total=len(ori[sum_type])):
+    for total_summary in tqdm(ori[sum_type], total=len(ori[sum_type]), desc="get_gold_ex_sum"):
         gold_ids = total_summary[sentence_ids] if sentence_ids in total_summary else total_summary['speaker_sentence_ids']
         gold_ids_lst.append(gold_ids)
 
@@ -173,7 +173,7 @@ def do_ext_sum(promptor, ori, topics, multidyle_ex_ids=None):
     dialogue = ori['dialogue']
     dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in dialogue])
     
-    for i, topic_input in tqdm(enumerate(topics), total=len(topics)):
+    for i, topic_input in tqdm(enumerate(topics), total=len(topics), desc="do_ext_sum"):
         # make instruction
         if multidyle_ex_ids:
             instruction = mk_inst_exsum_w_exids(dialog_str, topic_input, len(dialogue), int(len(dialogue)*0.3), multidyle_ex_ids[i])
@@ -254,7 +254,7 @@ def do_abs_sum(src_lst, topic_lst, summary_sample, sum_range, inst_maker, prompt
     output_sum_lst, tokenized_output_sum_lst = [], []
     total_len = len(src_lst)
 
-    for i, (srcs, topics) in tqdm(enumerate(zip(src_lst, topic_lst)), total=total_len):
+    for i, (srcs, topics) in tqdm(enumerate(zip(src_lst, topic_lst)), total=total_len, desc="do_abs_sum"):
         e_total_len = len(srcs)
         for src, topic in tqdm(enumerate(zip(srcs, topics)), total=e_total_len):
             instruction = inst_maker(src, sum_range)
@@ -337,7 +337,7 @@ def main():
 
         total_len = 0
         scores_dict = {}
-        for i, json_obj in tqdm(enumerate(json_lst), total=len(json_lst)):
+        for i, json_obj in tqdm(enumerate(json_lst), total=len(json_lst), desc="json loop"):
             # get topic or make topic-CoT
             topic_input_lst = mk_topic(promptor, json_obj, sum_type)
 
