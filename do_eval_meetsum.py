@@ -173,7 +173,7 @@ def do_ext_sum(promptor, ori, topics, multidyle_ex_id=None):
     dialogue = ori['dialogue']
     dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in dialogue])
     
-    for i, topic_input in tqdm(enumerate(topics), total=len(topics), desc="do_ext_sum"):
+    for topic_input in tqdm(topics, total=len(topics), desc="do_ext_sum"):
         # make instruction
         if multidyle_ex_id:
             instruction = mk_inst_exsum_w_exids(dialog_str, topic_input, len(dialogue), int(len(dialogue)*0.3), multidyle_ex_id)
@@ -191,28 +191,30 @@ def do_ext_sum(promptor, ori, topics, multidyle_ex_id=None):
             continue
 
         ###
-        step = 3
-        new_dialogue = []
-        try:
-            for a_id in range(0, len(first_aug_ids), step):
-                # aug_sent_range = range(aug_ids[a_id], aug_ids[a_id+step])
-                end_id = a_id+step-1
-                new_dialogue += dialogue[first_aug_ids[a_id]-1:first_aug_ids[end_id if end_id < len(first_aug_ids)-1 else len(first_aug_ids)-1]-1]
+        flag = True
+        if flag:
+            step = 3
+            new_dialogue = []
+            try:
+                for a_id in range(0, len(first_aug_ids), step):
+                    # aug_sent_range = range(aug_ids[a_id], aug_ids[a_id+step])
+                    end_id = a_id+step-1
+                    new_dialogue += dialogue[first_aug_ids[a_id]-1:first_aug_ids[end_id if end_id < len(first_aug_ids)-1 else len(first_aug_ids)-1]-1]
 
-            new_dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in new_dialogue])
+                new_dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in new_dialogue])
 
-            instruction = mk_inst_exsum_meetsum(new_dialog_str, topic_input, new_dialog_str.count('['), 20)
+                instruction = mk_inst_exsum_meetsum(new_dialog_str, topic_input, new_dialog_str.count('['), 20)
 
-            aug_data = "I'm sorry"
-            while "I'm sorry" in aug_data or "죄송" in aug_data or 'Topic]과 관련된 문장' in aug_data:
-                aug_data = promptor.do_llm(instruction)
+                aug_data = "I'm sorry"
+                while "I'm sorry" in aug_data or "죄송" in aug_data or 'Topic]과 관련된 문장' in aug_data:
+                    aug_data = promptor.do_llm(instruction)
 
-            sec_aug_ids = postpro_ex_sum(aug_data)
-            if sec_aug_ids == []: 
-                print(aug_data)
+                sec_aug_ids = postpro_ex_sum(aug_data)
+                if sec_aug_ids == []: 
+                    print(aug_data)
+                    sec_aug_ids = first_aug_ids
+            except:
                 sec_aug_ids = first_aug_ids
-        except:
-            sec_aug_ids = first_aug_ids
         ######
 
         aug_ids_lst.append(sec_aug_ids)
