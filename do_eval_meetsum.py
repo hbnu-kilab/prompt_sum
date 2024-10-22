@@ -365,12 +365,12 @@ def main():
             total_len += len(src_lst)
             
             # scoring
-            for src, aug_ids, gold_ids, output_sum, gold_sum in zip(src_lst, aug_ids_lst, gold_ids_lst, tokenized_output_sum_lst, tokenized_gold_sum_lst):
+            ex_eval(aug_ids_lst, gold_ids_lst)
+            for src, output_sum, gold_sum in zip(src_lst, tokenized_output_sum_lst, tokenized_gold_sum_lst):
                 score_dict = gather_rouge(gold_sum, output_sum, scores_dict, metric)
 
                 # print
                 # evaluation for extractive summary 
-                ex_eval(aug_ids, gold_ids)
                 print(score_dict)
                 print()
                 print(f"Input text: {src}")
