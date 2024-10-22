@@ -81,7 +81,8 @@ def baseline(model_type, src_lst, sum_lst, sum_range, metric, inst_maker, prompt
             output_sum = "I'm sorry"
             while "I'm sorry" in output_sum or "죄송하지만 현재 작업을" in output_sum \
                 or "죄송해, 내가 널 이해하지 못했어" in output_sum or "죄송하지만 이 요청은 내부 정책에" in output_sum \
-                    or "죄송해요, 미완성된 원문은 도움을" in output_sum: 
+                    or "죄송해요, 미완성된 원문은 도움을" in output_sum or "죄송하지만 글자 수가 너무 많아서" in output_sum \
+                    or "죄송하지만 주어진 텍스트를 기반으로" in output_sum: 
                 output_sum = promptor.do_llm(instruction)
 
             if nshot == 0:
