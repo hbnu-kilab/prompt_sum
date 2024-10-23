@@ -4,7 +4,7 @@ from pathlib import Path
 from loader import DataLoader, JsonInDirLoader, SummaryLoader, SummaryETRILoader
 from promptor import Promptor, ExaonePromptor, Gemma2Promptor, ChatGPTPromptor
 
-from promptor.mk_instruction import mk_inst_etri_augmentation, mk_inst_exsum_wo_noise
+from promptor.mk_instruction import mk_inst_etri_augmentation, mk_inst_exsum_wo_noise, mk_inst_get_exsum
 
 import argparse
 import json
@@ -190,6 +190,71 @@ def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst
     print(f"Num of augmentation format error: {aug_id_err}")
     print(f"Reduction ratio: {diff_sent_cnt / ori_sent_cnt:.4f}")
 
+
+def reset_ex_ids(args, promptor, data_dir_list, json_lst, dialog_lst, sum_type, data_type):
+    save_path = Path(args.save_dir)
+    ori_sent_cnt, diff_sent_cnt = 0, 0
+    aug_id_err = 0
+
+    
+    for d_dir, ori, dialog_dict in tqdm(zip(data_dir_list, json_lst, dialog_lst), total=len(json_lst), desc="json iter"):
+        title, file_ext = os.path.splitext(d_dir.split('/')[-1])
+
+        ret_dict = {'metadata': ori['metadata'], "dialog": dialog_lst,}
+
+        ori_sent_cnt += len(dialog_dict)
+        dialog_str = ' '.join([f'[{k}] {v.get("sentence")}' for k, v in dialog_dict.items()])
+        
+        for sum_type in ["total_summary", "topic_summary"]:
+            if sum_type == "total_summary":
+                asum_type = "total_asummary"
+                sent_id_type = "total_sentence_ids"
+            elif sum_type == "topic_summary":
+                asum_type = "topic_asummary"
+                sent_id_type = "topic_sentence_ids"
+
+            topic_sum_lst = ori[sum_type]
+            for topic_sum in topic_sum_lst:
+                a_sum = topic_sum[asum_type]
+                sent_ids = topic_sum[sent_id_type]
+                topic = topic_sum["topic"]
+
+                instruction = mk_inst_get_exsum(dialog_str, topic, a_sum, sent_ids)
+
+                while True:                
+                    aug_data = promptor.do_llm(instruction)
+
+                    tmp_aug = aug_data.split(': ')[-1].strip()
+                    try:
+                        if tmp_aug[-1] == '.': tmp_aug = tmp_aug[:-1]
+                        if "[결과 id 리스트]:" in tmp_aug: tmp_aug = tmp_aug.split("[결과 id 리스트]: ")[-1]
+                        
+                        if tmp_aug[0] == '[' and tmp_aug[-1] != ']': tmp_aug += ']'
+                        elif tmp_aug[0] != '[' and tmp_aug[-1] == ']': tmp_aug = '[' + tmp_aug
+
+                        aug_ids = eval(tmp_aug)
+                        break
+                    except:
+                        continue
+
+
+                if type(aug_ids) == tuple: aug_ids = list(aug_ids)
+                if 0 in aug_ids:
+                    del aug_ids[aug_ids.index(0)]
+
+                # merged_id_dict = {v:k for k, v in enumerate(aug_ids)}
+                topic_sum[sent_id_type] = aug_ids
+                if sum_type == "total_summary":
+                    if "speaker_sentence_ids" in ori["total_summary"][0]:
+                        ori["total_summary"][0]["speaker_sentence_ids"] = aug_ids
+                
+            ret_dict.update(sum_type, ori[sum_type])
+
+        # ret_dict = {'metadata': ori['metadata'], "dialog": dialog_lst, sum_type: ori[sum_type]}
+
+        with open(f"./{save_path/data_type}/{title}.reset_eid{file_ext}", 'w') as of:
+            json.dump(ret_dict, of, indent=4, ensure_ascii=False)
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-rd", "--root_dir", default="/kilab/data/etri", dest="root_dir") 
@@ -198,10 +263,12 @@ def main():
     parser.add_argument("-s", "--save_dir", default="./result/etri", dest="save_dir") 
     parser.add_argument("-m", "--model_type", default="gpt-4o-mini", dest="model_type", help="model_type: [gpt-4o-mini, gpt-4-turbo, gemma2, exaone]")
     parser.add_argument("-at", "--augmentation_type", default="style_transfer", dest="augmentation_type", help="augmentation_type: [style_transfer, filter_noise, all]")
+    parser.add_argument("-st", "--summary_types", default="total_summary", dest="summary_types", help="--summary_types topic_summary", type=str) 
     # parser.add_argument("-cda", "--do_cda", dest="do_cda", action="store_true")
     args = parser.parse_args()
 
     promptor = load_mode(args)
+    sum_type = args.summary_types
 
     for data_type in args.data_types:
         data_path = Path(args.root_dir) / args.data_dir / data_type / "train"
@@ -211,6 +278,8 @@ def main():
             aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type)
         elif args.augmentation_type == "filter_noise":
             aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst, dialog_lst, data_type)
+        elif args.augmentation_type == "reset_eid":
+            reset_ex_ids(args, promptor, data_dir_list, json_lst, dialog_lst, sum_type, data_type)
         elif args.augmentation_type == "all":
             aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type)
             aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst, dialog_lst, data_type)
