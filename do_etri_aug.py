@@ -216,6 +216,9 @@ def reset_ex_ids(args, promptor, data_dir_list, json_lst, dialog_lst, sum_type, 
             topic_sum_lst = ori[sum_type]
             for topic_sum in topic_sum_lst:
                 a_sum = topic_sum[asum_type]
+                
+                if sent_id_type not in topic_sum:
+                    sent_id_type = "speaker_sentence_ids"
                 sent_ids = topic_sum[sent_id_type]
                 topic = topic_sum["topic"]
 
