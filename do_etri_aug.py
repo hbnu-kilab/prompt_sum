@@ -226,6 +226,7 @@ def reset_ex_ids(args, promptor, data_dir_list, json_lst, dialog_lst, sum_type, 
 
                 instruction = mk_inst_get_exsum(dialog_str, topic, a_sum, sent_ids)
 
+                cnt = 0
                 while True:                
                     aug_data = promptor.do_llm(instruction)
 
@@ -240,6 +241,11 @@ def reset_ex_ids(args, promptor, data_dir_list, json_lst, dialog_lst, sum_type, 
                         aug_ids = eval(tmp_aug)
                         break
                     except:
+                        cnt += 1
+                        if cnt > 3: 
+                            aug_ids = sent_ids
+                            break
+
                         continue
 
 
@@ -253,7 +259,7 @@ def reset_ex_ids(args, promptor, data_dir_list, json_lst, dialog_lst, sum_type, 
                     if "speaker_sentence_ids" in ori["total_summary"][0]:
                         ori["total_summary"][0]["speaker_sentence_ids"] = aug_ids
                 
-            ret_dict.update(sum_type, ori[sum_type])
+            ret_dict[sum_type] = ori[sum_type]
 
         # ret_dict = {'metadata': ori['metadata'], "dialog": dialog_lst, sum_type: ori[sum_type]}
 
