@@ -200,7 +200,7 @@ def reset_ex_ids(args, promptor, data_dir_list, json_lst, dialog_lst, sum_type, 
     for d_dir, ori, dialog_dict in tqdm(zip(data_dir_list, json_lst, dialog_lst), total=len(json_lst), desc="json iter"):
         title, file_ext = os.path.splitext(d_dir.split('/')[-1])
 
-        ret_dict = {'metadata': ori['metadata'] if 'metadata' in ori else {}, "dialog": dialog_lst,}
+        ret_dict = {'metadata': ori['metadata'] if 'metadata' in ori else {}, "dialog": ori["dialogue"],}
 
         ori_sent_cnt += len(dialog_dict)
         dialog_str = ' '.join([f'[{k}] {v.get("sentence")}' for k, v in dialog_dict.items()])
@@ -280,6 +280,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-rd", "--root_dir", default="/kilab/data/etri", dest="root_dir") 
     parser.add_argument("-dt", "--data_types", nargs='+', default=["timbel", "datamaker-2023-all"], dest="data_types", help="--data_types timbel datamaker-2023-all", type=str) 
+    parser.add_argument("-dp", "--data_phases", nargs='+', default=["train", "val", "test"], dest="data_types", help="--data_types train val test", type=str) 
     parser.add_argument("-d", "--data_dir", default="summarization/ko", dest="data_dir")
     parser.add_argument("-s", "--save_dir", default="./result/etri", dest="save_dir") 
     parser.add_argument("-m", "--model_type", default="gpt-4o-mini", dest="model_type", help="model_type: [gpt-4o-mini, gpt-4-turbo, gemma2, exaone]")
@@ -290,20 +291,30 @@ def main():
 
     promptor = load_mode(args)
     sum_type = args.summary_types
+    
+    save_path = Path(args.save_dir)
+    aug_type = args.augmentation_type
 
     for data_type in args.data_types:
-        data_path = Path(args.root_dir) / args.data_dir / data_type / "train"
-        data_dir_list, json_lst, ex_sent_lst, dialog_lst = load_data(data_path)
+        for data_phase in args.data_phases:
+            save_dir = Path(f'./{save_path/data_type}') / f'{data_phase}'
+            if not os.path.exists(save_dir):
+                os.makedirs(save_dir)
 
-        if args.augmentation_type == "style_transfer":
-            aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type)
-        elif args.augmentation_type == "filter_noise":
-            aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst, dialog_lst, data_type)
-        elif args.augmentation_type == "reset_eid":
-            reset_ex_ids(args, promptor, data_dir_list, json_lst, dialog_lst, sum_type, data_type)
-        elif args.augmentation_type == "all":
-            aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type)
-            aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst, dialog_lst, data_type)
+            save_dir += '{}.' + f'{aug_type}' + '{}'
+
+            data_path = Path(args.root_dir) / args.data_dir / data_type / data_phase
+            data_dir_list, json_lst, ex_sent_lst, dialog_lst = load_data(data_path)
+
+            if args.augmentation_type == "style_transfer":
+                aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type)
+            elif args.augmentation_type == "filter_noise":
+                aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst, dialog_lst, data_type)
+            elif args.augmentation_type == "reset_eid":
+                reset_ex_ids(args, promptor, data_dir_list, json_lst, dialog_lst, sum_type, data_type)
+            elif args.augmentation_type == "all":
+                aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type)
+                aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst, dialog_lst, data_type)
 
 
 if __name__ == "__main__":
