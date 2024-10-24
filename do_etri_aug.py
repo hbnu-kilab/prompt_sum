@@ -243,7 +243,7 @@ def reset_ex_ids(promptor, dialog_dict, ori):
                     
                     if type(aug_ids) != list: 
                         cnt += 1
-                        print("ERR:", aug_ids)
+                        print("ERR:", tmp_aug)
                         if cnt > 6: 
                             aug_ids = sent_ids
                             break
@@ -254,7 +254,7 @@ def reset_ex_ids(promptor, dialog_dict, ori):
                     cnt += 1
                     if cnt > 6: 
                         aug_ids = sent_ids
-                        print("ERR:", aug_ids)
+                        print("ERR:", tmp_aug)
                         break
 
                     continue
