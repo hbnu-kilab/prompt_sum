@@ -200,7 +200,7 @@ def reset_ex_ids(args, promptor, data_dir_list, json_lst, dialog_lst, sum_type, 
     for d_dir, ori, dialog_dict in tqdm(zip(data_dir_list, json_lst, dialog_lst), total=len(json_lst), desc="json iter"):
         title, file_ext = os.path.splitext(d_dir.split('/')[-1])
 
-        ret_dict = {'metadata': ori['metadata'], "dialog": dialog_lst,}
+        ret_dict = {'metadata': ori['metadata'] if 'metadata' in ori else {}, "dialog": dialog_lst,}
 
         ori_sent_cnt += len(dialog_dict)
         dialog_str = ' '.join([f'[{k}] {v.get("sentence")}' for k, v in dialog_dict.items()])
@@ -230,6 +230,7 @@ def reset_ex_ids(args, promptor, data_dir_list, json_lst, dialog_lst, sum_type, 
                 while True:                
                     aug_data = promptor.do_llm(instruction)
 
+                    
                     tmp_aug = aug_data.split(': ')[-1].strip()
                     try:
                         if tmp_aug[-1] == '.': tmp_aug = tmp_aug[:-1]
@@ -239,14 +240,23 @@ def reset_ex_ids(args, promptor, data_dir_list, json_lst, dialog_lst, sum_type, 
                         elif tmp_aug[0] != '[' and tmp_aug[-1] == ']': tmp_aug = '[' + tmp_aug
 
                         aug_ids = eval(tmp_aug)
+                        
+                        if type(aug_ids) != list: 
+                            cnt += 1
+                            if cnt > 6: 
+                                aug_ids = sent_ids
+                                break
+
+                            continue                        
                         break
                     except:
                         cnt += 1
-                        if cnt > 3: 
+                        if cnt > 6: 
                             aug_ids = sent_ids
                             break
 
                         continue
+
 
 
                 if type(aug_ids) == tuple: aug_ids = list(aug_ids)
