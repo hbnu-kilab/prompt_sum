@@ -224,7 +224,7 @@ def reset_ex_ids(promptor, dialog_dict, ori):
             sent_ids = topic_sum[sent_id_type]
             topic = topic_sum[topic_type]
 
-            instruction = mk_inst_get_exsum(dialog_str, topic, a_sum, sent_ids)
+            instruction = mk_inst_get_exsum(dialog_str, topic, a_sum, 20)
 
             cnt = 0
             while True:                
