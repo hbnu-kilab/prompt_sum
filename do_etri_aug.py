@@ -335,6 +335,7 @@ def main():
             data_dir_list, json_lst, ex_sent_lst, dialog_lst = load_data(data_path)
 
             for d_dir, ori, dialog_dict in tqdm(zip(data_dir_list, json_lst, dialog_lst), total=len(json_lst), desc="json iter"):
+                print()
                 title, file_ext = os.path.splitext(d_dir.split('/')[-1])
                 
                 if args.augmentation_type == "style_transfer":
@@ -351,8 +352,6 @@ def main():
                 with open(save_dir / (f'{title}.' + f'{aug_type}' + f'{file_ext}'), 'w') as of:
                     json.dump(ret_dict, of, indent=4, ensure_ascii=False)
 
-                print()
-                print()
 
 
 if __name__ == "__main__":
