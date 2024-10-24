@@ -307,7 +307,7 @@ def main():
 
             for d_dir, ori, dialog_dict in tqdm(zip(data_dir_list, json_lst, dialog_lst), total=len(json_lst), desc="json iter"):
                 title, file_ext = os.path.splitext(d_dir.split('/')[-1])
-                save_dir /= f'{title}.' + f'{aug_type}' + f'{file_ext}'
+                
 
                 if args.augmentation_type == "style_transfer":
                     aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type)
@@ -322,7 +322,7 @@ def main():
 
                 
                 # with open(f"./{save_path/data_type}/{title}.reset_eid{file_ext}", 'w') as of:
-                with open(save_dir, 'w') as of:
+                with open(save_dir / f'{title}.' + f'{aug_type}' + f'{file_ext}', 'w') as of:
                     json.dump(ret_dict, of, indent=4, ensure_ascii=False)
 
 
