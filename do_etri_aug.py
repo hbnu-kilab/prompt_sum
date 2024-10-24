@@ -191,90 +191,92 @@ def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst
     print(f"Reduction ratio: {diff_sent_cnt / ori_sent_cnt:.4f}")
 
 
-def reset_ex_ids(args, promptor, data_dir_list, json_lst, dialog_lst, data_type):
-    save_path = Path(args.save_dir)
+# def reset_ex_ids(args, promptor, data_dir_list, json_lst, dialog_lst, data_type):
+def reset_ex_ids(promptor, dialog_dict, ori):
+    # save_path = Path(args.save_dir)
     ori_sent_cnt, diff_sent_cnt = 0, 0
     aug_id_err = 0
 
     
-    for d_dir, ori, dialog_dict in tqdm(zip(data_dir_list, json_lst, dialog_lst), total=len(json_lst), desc="json iter"):
-        title, file_ext = os.path.splitext(d_dir.split('/')[-1])
+    # for d_dir, ori, dialog_dict in tqdm(zip(data_dir_list, json_lst, dialog_lst), total=len(json_lst), desc="json iter"):
+    #     title, file_ext = os.path.splitext(d_dir.split('/')[-1])
 
-        ret_dict = {'metadata': ori['metadata'] if 'metadata' in ori else {}, "dialog": ori["dialogue"],}
+    ret_dict = {'metadata': ori['metadata'] if 'metadata' in ori else {}, "dialog": ori["dialogue"],}
 
-        ori_sent_cnt += len(dialog_dict)
-        dialog_str = ' '.join([f'[{k}] {v.get("sentence")}' for k, v in dialog_dict.items()])
-        
-        for sum_type in ["total_summary", "topic_summary"]:
-            if sum_type == "total_summary":
-                asum_type = "total_asummary"
-                sent_id_type = "total_sentence_ids"
-                topic_type = "total_topic"
-            elif sum_type == "topic_summary":
-                asum_type = "topic_asummary"
-                sent_id_type = "topic_sentence_ids"
-                topic_type = "topic"
+    ori_sent_cnt += len(dialog_dict)
+    dialog_str = ' '.join([f'[{k}] {v.get("sentence")}' for k, v in dialog_dict.items()])
+    
+    for sum_type in ["total_summary", "topic_summary"]:
+        if sum_type == "total_summary":
+            asum_type = "total_asummary"
+            sent_id_type = "total_sentence_ids"
+            topic_type = "total_topic"
+        elif sum_type == "topic_summary":
+            asum_type = "topic_asummary"
+            sent_id_type = "topic_sentence_ids"
+            topic_type = "topic"
 
-            topic_sum_lst = ori[sum_type]
-            for topic_sum in topic_sum_lst:
-                a_sum = topic_sum[asum_type]
+        topic_sum_lst = ori[sum_type]
+        for topic_sum in topic_sum_lst:
+            a_sum = topic_sum[asum_type]
+            
+            if sent_id_type not in topic_sum:
+                sent_id_type = "speaker_sentence_ids"
+            sent_ids = topic_sum[sent_id_type]
+            topic = topic_sum[topic_type]
+
+            instruction = mk_inst_get_exsum(dialog_str, topic, a_sum, sent_ids)
+
+            cnt = 0
+            while True:                
+                aug_data = promptor.do_llm(instruction)
+
                 
-                if sent_id_type not in topic_sum:
-                    sent_id_type = "speaker_sentence_ids"
-                sent_ids = topic_sum[sent_id_type]
-                topic = topic_sum[topic_type]
-
-                instruction = mk_inst_get_exsum(dialog_str, topic, a_sum, sent_ids)
-
-                cnt = 0
-                while True:                
-                    aug_data = promptor.do_llm(instruction)
-
+                tmp_aug = aug_data.split(': ')[-1].strip()
+                try:
+                    if tmp_aug[-1] == '.': tmp_aug = tmp_aug[:-1]
+                    if "[결과 id 리스트]:" in tmp_aug: tmp_aug = tmp_aug.split("[결과 id 리스트]: ")[-1]
                     
-                    tmp_aug = aug_data.split(': ')[-1].strip()
-                    try:
-                        if tmp_aug[-1] == '.': tmp_aug = tmp_aug[:-1]
-                        if "[결과 id 리스트]:" in tmp_aug: tmp_aug = tmp_aug.split("[결과 id 리스트]: ")[-1]
-                        
-                        if tmp_aug[0] == '[' and tmp_aug[-1] != ']': tmp_aug += ']'
-                        elif tmp_aug[0] != '[' and tmp_aug[-1] == ']': tmp_aug = '[' + tmp_aug
+                    if tmp_aug[0] == '[' and tmp_aug[-1] != ']': tmp_aug += ']'
+                    elif tmp_aug[0] != '[' and tmp_aug[-1] == ']': tmp_aug = '[' + tmp_aug
 
-                        aug_ids = eval(tmp_aug)
-                        
-                        if type(aug_ids) != list: 
-                            cnt += 1
-                            if cnt > 6: 
-                                aug_ids = sent_ids
-                                break
-
-                            continue                        
-                        break
-                    except:
+                    aug_ids = eval(tmp_aug)
+                    
+                    if type(aug_ids) != list: 
                         cnt += 1
                         if cnt > 6: 
                             aug_ids = sent_ids
                             break
 
-                        continue
+                        continue                        
+                    break
+                except:
+                    cnt += 1
+                    if cnt > 6: 
+                        aug_ids = sent_ids
+                        break
+
+                    continue
 
 
 
-                if type(aug_ids) == tuple: aug_ids = list(aug_ids)
-                if 0 in aug_ids:
-                    del aug_ids[aug_ids.index(0)]
+            if type(aug_ids) == tuple: aug_ids = list(aug_ids)
+            if 0 in aug_ids:
+                del aug_ids[aug_ids.index(0)]
 
-                # merged_id_dict = {v:k for k, v in enumerate(aug_ids)}
-                topic_sum[sent_id_type] = aug_ids
-                if sum_type == "total_summary":
-                    if "speaker_sentence_ids" in ori["total_summary"][0]:
-                        ori["total_summary"][0]["speaker_sentence_ids"] = aug_ids
-                
-            ret_dict[sum_type] = ori[sum_type]
+            # merged_id_dict = {v:k for k, v in enumerate(aug_ids)}
+            topic_sum[sent_id_type] = aug_ids
+            if sum_type == "total_summary":
+                if "speaker_sentence_ids" in ori["total_summary"][0]:
+                    ori["total_summary"][0]["speaker_sentence_ids"] = aug_ids
+            
+        ret_dict[sum_type] = ori[sum_type]
 
         # ret_dict = {'metadata': ori['metadata'], "dialog": dialog_lst, sum_type: ori[sum_type]}
 
-        with open(f"./{save_path/data_type}/{title}.reset_eid{file_ext}", 'w') as of:
-            json.dump(ret_dict, of, indent=4, ensure_ascii=False)
+        # with open(f"./{save_path/data_type}/{title}.reset_eid{file_ext}", 'w') as of:
+        #     json.dump(ret_dict, of, indent=4, ensure_ascii=False)
+    return ret_dict
 
 def main():
     parser = argparse.ArgumentParser()
@@ -299,20 +301,29 @@ def main():
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
 
-            save_dir /= '{}.' + f'{aug_type}' + '{}'
 
             data_path = Path(args.root_dir) / args.data_dir / data_type / data_phase
             data_dir_list, json_lst, ex_sent_lst, dialog_lst = load_data(data_path)
 
-            if args.augmentation_type == "style_transfer":
-                aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type)
-            elif args.augmentation_type == "filter_noise":
-                aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst, dialog_lst, data_type)
-            elif args.augmentation_type == "reset_eid":
-                reset_ex_ids(args, promptor, data_dir_list, json_lst, dialog_lst, data_type)
-            elif args.augmentation_type == "all":
-                aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type)
-                aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst, dialog_lst, data_type)
+            for d_dir, ori, dialog_dict in tqdm(zip(data_dir_list, json_lst, dialog_lst), total=len(json_lst), desc="json iter"):
+                title, file_ext = os.path.splitext(d_dir.split('/')[-1])
+                save_dir /= f'{title}.' + f'{aug_type}' + f'{file_ext}'
+
+                if args.augmentation_type == "style_transfer":
+                    aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type)
+                elif args.augmentation_type == "filter_noise":
+                    aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst, dialog_lst, data_type)
+                elif args.augmentation_type == "reset_eid":
+                    # ret_dict = reset_ex_ids(args, promptor, data_dir_list, json_lst, dialog_lst, data_type)
+                    ret_dict = reset_ex_ids(promptor, dialog_dict, ori)
+                elif args.augmentation_type == "all":
+                    aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type)
+                    aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst, dialog_lst, data_type)
+
+                
+                # with open(f"./{save_path/data_type}/{title}.reset_eid{file_ext}", 'w') as of:
+                with open(save_dir, 'w') as of:
+                    json.dump(ret_dict, of, indent=4, ensure_ascii=False)
 
 
 if __name__ == "__main__":

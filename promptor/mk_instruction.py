@@ -165,7 +165,7 @@ def mk_inst_etri_augmentation(sent):
 def mk_inst_exsum_wo_noise(sent, sum_ids):
     return f"""주어진 입력 문장을 아래 <order>에 따라 결과를 생성해줘.
 <order>:
-1. 입력 문장은 [num] sentence 가 연결된 meeting dialogue 입니다.
+1. 입력 문장은 [id] sentence 가 연결된 meeting dialogue 이며, id는 1부터 시작합니다.
 2. 전체 회의에서 추출된 요약인 summary에 해당하는 id 리스트 [SUM_IDS] 가 주워집니다.
 3. 전체 대화를 파악하여 입력된 summary에 도움이 되는 문장들 선별해주세요. 전체 대화에서 골고루 선별하면 좋습니다.
 4. 인삿말이나 추임새, extractive summary와 관련 없는 문장들은 제외합니다.
@@ -184,7 +184,7 @@ def mk_inst_exsum_wo_noise(sent, sum_ids):
 def mk_inst_get_exsum(sent, topic, asum, sum_ids):
     return f"""주어진 입력 문장을 아래 <order>에 따라 결과를 생성해줘.
 <order>:
-1. 입력 문장은 [num] sentence 가 연결된 meeting dialogue 입니다.
+1. 입력 문장은 [id] sentence 가 연결된 meeting dialogue 이며, id는 1부터 시작합니다.
 2. 전체 회의에 대한 주제 [Topic]과 요약문 [Summary]가 주어집니다.
 3. 전체 회의에서 추출된 요약인 summary에 해당하는 id 리스트 [KEY_IDS] 가 주어집니다.
 4. 전체 대화를 파악하여 입력된 summary에 도움이 되는 문장들 선별해주세요. 전체 대화에서 골고루 선별하면 좋습니다.
