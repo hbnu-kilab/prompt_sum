@@ -307,6 +307,7 @@ def main():
     parser.add_argument("-pm", "--pipeline_method", default="only_llm", dest="pipeline_method", help="model_type: [only_llm, only_encoder, util_llm, merge_exs]")
     args = parser.parse_args()
 
+    data_dir = args.data_dir
     sum_type = args.summary_types
     promptor = load_model(args)
     # inst_maker = mk_inst_for_meeting_summary
@@ -339,7 +340,7 @@ def main():
             multidyle_config.retriever_name_or_path = "klue/roberta-large"
             multidyle_config.eval_model_dir = '/kilab/models/summarization/multidyle/encoder/epochs_1--val_26.3946'
             multidyle_config.test_type = multidyle_data_type
-            multidyle_config.dataset = [f'/kilab/data/etri/summarization/ko_ori/{multidyle_data_type}/']
+            multidyle_config.dataset = [f'/kilab/data/etri/{data_dir}/{multidyle_data_type}/']
             if args.summary_types == "total_summary":
                 multidyle_config.data_type = f"{multidyle_data_type}-onlytotal"
             elif args.summary_types == "topic_total_summary":
@@ -401,7 +402,7 @@ def main():
                 print(f"Gold Output summary: {gold_sum}\n\n\n")
 
             print("JSON SCORE:")
-            avg_rouge(scores_dict_json, total_len)
+            avg_rouge(scores_dict_json, len(src_lst))
             print_rouge(scores_dict_json)
 
             all_aug_ids_lst += aug_ids_lst
