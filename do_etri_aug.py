@@ -191,7 +191,7 @@ def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst
     print(f"Reduction ratio: {diff_sent_cnt / ori_sent_cnt:.4f}")
 
 
-def reset_ex_ids(args, promptor, data_dir_list, json_lst, dialog_lst, sum_type, data_type):
+def reset_ex_ids(args, promptor, data_dir_list, json_lst, dialog_lst, data_type):
     save_path = Path(args.save_dir)
     ori_sent_cnt, diff_sent_cnt = 0, 0
     aug_id_err = 0
@@ -285,12 +285,10 @@ def main():
     parser.add_argument("-s", "--save_dir", default="./result/etri", dest="save_dir") 
     parser.add_argument("-m", "--model_type", default="gpt-4o-mini", dest="model_type", help="model_type: [gpt-4o-mini, gpt-4-turbo, gemma2, exaone]")
     parser.add_argument("-at", "--augmentation_type", default="style_transfer", dest="augmentation_type", help="augmentation_type: [style_transfer, filter_noise, all]")
-    parser.add_argument("-st", "--summary_types", default="total_summary", dest="summary_types", help="--summary_types topic_summary", type=str) 
     # parser.add_argument("-cda", "--do_cda", dest="do_cda", action="store_true")
     args = parser.parse_args()
 
     promptor = load_mode(args)
-    sum_type = args.summary_types
     
     save_path = Path(args.save_dir)
     aug_type = args.augmentation_type
@@ -311,7 +309,7 @@ def main():
             elif args.augmentation_type == "filter_noise":
                 aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst, dialog_lst, data_type)
             elif args.augmentation_type == "reset_eid":
-                reset_ex_ids(args, promptor, data_dir_list, json_lst, dialog_lst, sum_type, data_type)
+                reset_ex_ids(args, promptor, data_dir_list, json_lst, dialog_lst, data_type)
             elif args.augmentation_type == "all":
                 aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type)
                 aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst, dialog_lst, data_type)
