@@ -215,7 +215,7 @@ def reset_ex_ids(promptor, dialog_dict, ori):
             topic_type = "topic"
 
         ret_sum_lst = []
-        for topic_sum in ori[sum_type]:
+        for topic_sum in ret_dict[sum_type]:
             a_sum = topic_sum[asum_type]
             
             if sent_id_type not in topic_sum:
