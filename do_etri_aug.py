@@ -299,7 +299,7 @@ def main():
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
 
-            save_dir += '{}.' + f'{aug_type}' + '{}'
+            save_dir /= '{}.' + f'{aug_type}' + '{}'
 
             data_path = Path(args.root_dir) / args.data_dir / data_type / data_phase
             data_dir_list, json_lst, ex_sent_lst, dialog_lst = load_data(data_path)
