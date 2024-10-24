@@ -264,18 +264,10 @@ def reset_ex_ids(promptor, dialog_dict, ori):
             if 0 in aug_ids:
                 del aug_ids[aug_ids.index(0)]
 
-            # merged_id_dict = {v:k for k, v in enumerate(aug_ids)}
             aug_ex_sent = ' '.join([dialog_dict[ex_id]["sentence"] for ex_id in aug_ids])
             topic_sum[sent_id_type] = aug_ids
             topic_sum[esum_type] = aug_ex_sent
-            # if sum_type == "total_summary":
-            #     if "speaker_sentence_ids" in ori["total_summary"][0]:
-            #         ori[sum_type][0]["speaker_sentence_ids"] = aug_ids
-            #     else:
-            #         ori[sum_type][0]["total_sentence_ids"] = aug_ids
-            #     ori[sum_type][0]["total_esummary"] = aug_ex_sent
-            # elif sum_type == "topic_summary":
-            #     topic_sum[""]
+            
             ret_sum_lst.append(topic_sum)
         
         ret_dict[sum_type] = ret_sum_lst
