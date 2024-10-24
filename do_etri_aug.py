@@ -325,7 +325,7 @@ def main():
 
                 
                 # with open(f"./{save_path/data_type}/{title}.reset_eid{file_ext}", 'w') as of:
-                with open(save_dir / f'{title}.' + f'{aug_type}' + f'{file_ext}', 'w') as of:
+                with open(save_dir / (f'{title}.' + f'{aug_type}' + f'{file_ext}'), 'w') as of:
                     json.dump(ret_dict, of, indent=4, ensure_ascii=False)
 
 
