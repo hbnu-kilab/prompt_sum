@@ -196,11 +196,7 @@ def reset_ex_ids(promptor, dialog_dict, ori):
     # save_path = Path(args.save_dir)
     ori_sent_cnt, diff_sent_cnt = 0, 0
     aug_id_err = 0
-
     
-    # for d_dir, ori, dialog_dict in tqdm(zip(data_dir_list, json_lst, dialog_lst), total=len(json_lst), desc="json iter"):
-    #     title, file_ext = os.path.splitext(d_dir.split('/')[-1])
-
     ret_dict = {'metadata': ori['metadata'] if 'metadata' in ori else {}, "dialog": ori["dialogue"],}
 
     ori_sent_cnt += len(dialog_dict)
@@ -210,14 +206,16 @@ def reset_ex_ids(promptor, dialog_dict, ori):
         if sum_type == "total_summary":
             asum_type = "total_asummary"
             sent_id_type = "total_sentence_ids"
+            esum_type = "total_esummary"
             topic_type = "total_topic"
         elif sum_type == "topic_summary":
             asum_type = "topic_asummary"
             sent_id_type = "topic_sentence_ids"
+            esum_type = "topic_esummary"
             topic_type = "topic"
 
-        topic_sum_lst = ori[sum_type]
-        for topic_sum in topic_sum_lst:
+        ret_sum_lst = []
+        for topic_sum in ori[sum_type]:
             a_sum = topic_sum[asum_type]
             
             if sent_id_type not in topic_sum:
@@ -258,24 +256,26 @@ def reset_ex_ids(promptor, dialog_dict, ori):
 
                     continue
 
-
-
             if type(aug_ids) == tuple: aug_ids = list(aug_ids)
             if 0 in aug_ids:
                 del aug_ids[aug_ids.index(0)]
 
             # merged_id_dict = {v:k for k, v in enumerate(aug_ids)}
+            aug_ex_sent = ' '.join([dialog_dict[ex_id]["sentence"] for ex_id in aug_ids])
             topic_sum[sent_id_type] = aug_ids
-            if sum_type == "total_summary":
-                if "speaker_sentence_ids" in ori["total_summary"][0]:
-                    ori["total_summary"][0]["speaker_sentence_ids"] = aug_ids
-            
+            topic_sum[esum_type] = aug_ex_sent
+            # if sum_type == "total_summary":
+            #     if "speaker_sentence_ids" in ori["total_summary"][0]:
+            #         ori[sum_type][0]["speaker_sentence_ids"] = aug_ids
+            #     else:
+            #         ori[sum_type][0]["total_sentence_ids"] = aug_ids
+            #     ori[sum_type][0]["total_esummary"] = aug_ex_sent
+            # elif sum_type == "topic_summary":
+            #     topic_sum[""]
+            ret_sum_lst.append(topic_sum)
+        
+        ori[sum_type] = ret_sum_lst
         ret_dict[sum_type] = ori[sum_type]
-
-        # ret_dict = {'metadata': ori['metadata'], "dialog": dialog_lst, sum_type: ori[sum_type]}
-
-        # with open(f"./{save_path/data_type}/{title}.reset_eid{file_ext}", 'w') as of:
-        #     json.dump(ret_dict, of, indent=4, ensure_ascii=False)
     return ret_dict
 
 def main():
