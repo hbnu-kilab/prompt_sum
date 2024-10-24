@@ -191,13 +191,13 @@ def aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst
     print(f"Reduction ratio: {diff_sent_cnt / ori_sent_cnt:.4f}")
 
 
-# def reset_ex_ids(args, promptor, data_dir_list, json_lst, dialog_lst, data_type):
 def reset_ex_ids(promptor, dialog_dict, ori):
     # save_path = Path(args.save_dir)
     ori_sent_cnt, diff_sent_cnt = 0, 0
     aug_id_err = 0
     
-    ret_dict = {'metadata': ori['metadata'] if 'metadata' in ori else {}, "dialog": ori["dialogue"],}
+    # ret_dict = {'metadata': ori['metadata'] if 'metadata' in ori else {}, "dialog": ori["dialogue"],}
+    ret_dict = deepcopy(ori)
 
     ori_sent_cnt += len(dialog_dict)
     dialog_str = ' '.join([f'[{k}] {v.get("sentence")}' for k, v in dialog_dict.items()])
@@ -220,6 +220,7 @@ def reset_ex_ids(promptor, dialog_dict, ori):
             
             if sent_id_type not in topic_sum:
                 sent_id_type = "speaker_sentence_ids"
+
             sent_ids = topic_sum[sent_id_type]
             topic = topic_sum[topic_type]
 
@@ -277,8 +278,7 @@ def reset_ex_ids(promptor, dialog_dict, ori):
             #     topic_sum[""]
             ret_sum_lst.append(topic_sum)
         
-        ori[sum_type] = ret_sum_lst
-        ret_dict[sum_type] = ori[sum_type]
+        ret_dict[sum_type] = ret_sum_lst
     return ret_dict
 
 def main():
@@ -311,20 +311,17 @@ def main():
             for d_dir, ori, dialog_dict in tqdm(zip(data_dir_list, json_lst, dialog_lst), total=len(json_lst), desc="json iter"):
                 title, file_ext = os.path.splitext(d_dir.split('/')[-1])
                 
-
                 if args.augmentation_type == "style_transfer":
                     aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type)
                 elif args.augmentation_type == "filter_noise":
                     aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst, dialog_lst, data_type)
                 elif args.augmentation_type == "reset_eid":
-                    # ret_dict = reset_ex_ids(args, promptor, data_dir_list, json_lst, dialog_lst, data_type)
                     ret_dict = reset_ex_ids(promptor, dialog_dict, ori)
                 elif args.augmentation_type == "all":
                     aug_for_extracted_dialgoue(args, promptor, data_dir_list, json_lst, ex_sent_lst, data_type)
                     aug_dialogue_by_llm_ext(args, promptor, data_dir_list, json_lst, ex_sent_lst, dialog_lst, data_type)
 
                 
-                # with open(f"./{save_path/data_type}/{title}.reset_eid{file_ext}", 'w') as of:
                 with open(save_dir / (f'{title}.' + f'{aug_type}' + f'{file_ext}'), 'w') as of:
                     json.dump(ret_dict, of, indent=4, ensure_ascii=False)
 
