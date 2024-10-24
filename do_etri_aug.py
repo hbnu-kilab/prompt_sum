@@ -268,9 +268,9 @@ def reset_ex_ids(promptor, dialog_dict, ori):
             topic_sum[sent_id_type] = aug_ids
             topic_sum[esum_type] = aug_ex_sent
             
-            ret_sum_lst.append(topic_sum)
+            # ret_sum_lst.append(topic_sum)
         
-        ret_dict[sum_type] = ret_sum_lst
+        # ret_dict[sum_type] = ret_sum_lst
     return ret_dict
 
 def main():
