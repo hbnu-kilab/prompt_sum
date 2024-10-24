@@ -224,7 +224,7 @@ def reset_ex_ids(promptor, dialog_dict, ori):
             sent_ids = topic_sum[sent_id_type]
             topic = topic_sum[topic_type]
 
-            instruction = mk_inst_get_exsum(dialog_str, topic, a_sum, 20)
+            instruction = mk_inst_get_exsum(dialog_str, topic, a_sum)
 
             cnt = 0
             while True:                
@@ -272,6 +272,40 @@ def reset_ex_ids(promptor, dialog_dict, ori):
         
         # ret_dict[sum_type] = ret_sum_lst
     return ret_dict
+
+def view_data_statistics(args):
+    for data_type in args.data_types:
+        a_len, id_len = 0, 0
+        cnt_data = 0
+        
+        for data_phase in args.data_phases:
+            data_path = Path(args.root_dir) / args.data_dir / data_type / data_phase
+            data_dir_list, json_lst, ex_sent_lst, dialog_lst = load_data(data_path)
+
+            for ori in tqdm(json_lst, total=len(json_lst), desc=""):
+                for sum_type in ["total_summary", "topic_summary"]:
+                    if sum_type == "total_summary":
+                        asum_type = "total_asummary"
+                        sent_id_type = "total_sentence_ids"
+                        esum_type = "total_esummary"
+                        topic_type = "total_topic"
+                    elif sum_type == "topic_summary":
+                        asum_type = "topic_asummary"
+                        sent_id_type = "topic_sentence_ids"
+                        esum_type = "topic_esummary"
+                        topic_type = "topic"
+
+                    for topic_sum in ori[sum_type]:
+                        a_sum = topic_sum[asum_type]
+                        
+                        if sent_id_type not in topic_sum:
+                            sent_id_type = "speaker_sentence_ids"
+
+                        sent_ids = topic_sum[sent_id_type]
+
+                        a_len += len(a_sum.split())
+                        id_len += len(sent_ids)
+                        cnt_data += 1
 
 def main():
     parser = argparse.ArgumentParser()

@@ -183,12 +183,12 @@ def mk_inst_exsum_wo_noise(sent, sum_ids):
 
 # [KEY_IDS]: {sum_ids}
 # 3. 전체 회의에서 추출된 요약인 summary에 해당하는 id 리스트 [KEY_IDS] 가 주어집니다.
-def mk_inst_get_exsum(sent, topic, asum, max_num):
+def mk_inst_get_exsum(sent, topic, asum):
     return f"""주어진 입력 문장을 아래 <order>에 따라 결과를 생성해줘.
 <order>:
 1. 입력 문장은 [id] sentence 가 연결된 meeting dialogue 이며, id는 1부터 시작합니다.
 2. 전체 회의에 대한 주제 [Topic]과 요약문 [Gold Summary]가 주어집니다.
-3. 대화를 파악하여 입력된 Gold Summary에 도움이 되는 문장들 최대 {max_num}개까지 선별해주세요.
+3. 대화를 파악하여 입력된 Gold Summary에 도움이 되는 문장들을 선별해주세요.
 4. 인삿말이나 추임새, Gold Summary와 관련 없는 문장들은 제외합니다.
 5. 주어진 주제와 요약문에 관련있는 문장들을 선별하여 나열하시오. 출력 형식은 다음 조건을 따르면 됩니다.
 6. 선별한 문장의 id를 다음과 같이 [1, 2, ...] 나열되는 형식으로 [결과 id 리스트]: 뒤에 id 리스트를 출력하세요. (문장이 아닌 id만 출력)
