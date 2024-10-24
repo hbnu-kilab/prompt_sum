@@ -230,13 +230,13 @@ def reset_ex_ids(promptor, dialog_dict, ori):
                 aug_data = promptor.do_llm(instruction)
 
                 tmp_aug = aug_data.split(': ')[-1].strip()
-                tmp_aug = tmp_aug.replace('(','[').replace(')',']')
                 try:
                     if tmp_aug[-1] == '.': tmp_aug = tmp_aug[:-1]
                     if "[결과 id 리스트]:" in tmp_aug: tmp_aug = tmp_aug.split("[결과 id 리스트]: ")[-1]
                     
                     if tmp_aug[0] == '[' and tmp_aug[-1] != ']': tmp_aug += ']'
                     elif tmp_aug[0] != '[' and tmp_aug[-1] == ']': tmp_aug = '[' + tmp_aug
+                    tmp_aug = tmp_aug.replace('(','[').replace(')',']')
 
                     aug_ids = eval(tmp_aug)
                     
