@@ -264,7 +264,9 @@ def reset_ex_ids(promptor, dialog_dict, ori):
             if 0 in aug_ids:
                 del aug_ids[aug_ids.index(0)]
 
-            aug_ex_sent = ' '.join([dialog_dict[ex_id]["sentence"] if type(dialog_dict[ex_id]["sentence"]) == str else '' for ex_id in aug_ids])
+            aug_ex_sent = ' '.join([dialog_dict[ex_id]["sentence"] \
+                if type(dialog_dict[ex_id]["sentence"]) == str else '' \
+                    for ex_id in aug_ids if ex_id in dialog_dict])
             topic_sum[sent_id_type] = aug_ids
             topic_sum[esum_type] = aug_ex_sent
             
