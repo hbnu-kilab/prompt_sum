@@ -239,6 +239,7 @@ def reset_ex_ids(promptor, dialog_dict, ori):
                     tmp_aug = tmp_aug.replace('(','[').replace(')',']')
 
                     aug_ids = eval(tmp_aug)
+                    aug_ids = [id_el for id_el in aug_ids]
                     
                     if type(aug_ids) != list: 
                         cnt += 1
