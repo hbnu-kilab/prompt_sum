@@ -351,6 +351,9 @@ def main():
                 with open(save_dir / (f'{title}.' + f'{aug_type}' + f'{file_ext}'), 'w') as of:
                     json.dump(ret_dict, of, indent=4, ensure_ascii=False)
 
+                print()
+                print()
+
 
 if __name__ == "__main__":
     main()
