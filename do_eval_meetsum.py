@@ -191,8 +191,11 @@ def do_ext_sum(promptor, ori, topics, multidyle_ex_id=None):
 
         first_aug_ids = postpro_ex_sum(aug_data)
         if first_aug_ids == []: 
+            if multidyle_ex_id:
+                first_aug_ids = multidyle_ex_id
+            else:
+                first_aug_ids = [fid for fid in range(0, len(dialogue), int(len(dialogue)*0.1))]
             print(aug_data)
-            continue
 
         ret_aug_ids = first_aug_ids
 
@@ -244,22 +247,16 @@ def get_gold_asum(ori, sum_type="total_summary"):
 
     return gold_sum_lst, tokenized_sum_lst
 
-def mk_src_with_exids(ori, aug_ids_lst, sum_type="total_summary"):
+def mk_src_with_exids(ori, aug_ids_lst):
     src_lst = []
 
-    # for i, (ori, aug_ids) in tqdm(enumerate(zip(json_lst, aug_ids_lst)), total=len(json_lst)):
-        # make dialogue with sent_id
     dialogue = ori['dialogue']
     dialogue_dict = {v['sentence_id']: v for v in dialogue}
     
-    # tmp_src, tmp_sum = [], []
-    # total_asummary = ori[sum_type][0][asum_type]
     for aug_ids in aug_ids_lst:
         ex_dial_str = ' '.join([dialogue_dict[ex_id].get("sentence").replace('n/', '').replace('o/', '').strip()
                                 for ex_id in aug_ids if ex_id in dialogue_dict])
         src_lst.append(ex_dial_str)
-    # src_lst.append(tmp_src)
-    # gold_sum_lst.append(tmp_sum)
         
     return src_lst
 
@@ -302,7 +299,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-rd", "--root_dir", default="/kilab/data/etri", dest="root_dir") 
     parser.add_argument("-dt", "--data_types", nargs='+', default=["timbel", "datamaker-2023-all"], dest="data_types", help="--data_types timbel datamaker-2023-all", type=str) 
-    parser.add_argument("-st", "--summary_types", default="total_summary", dest="summary_types", help="--summary_types topic_summary", type=str) 
+    parser.add_argument("-st", "--summary_types", nargs='+', default=["total_summary"], dest="summary_types", help="--summary_types topic_summary", type=str) 
     parser.add_argument("-d", "--data_dir", default="summarization/ko", dest="data_dir")
     parser.add_argument("-s", "--save_dir", default="./result/etri", dest="save_dir") 
     parser.add_argument("-m", "--model_type", default="gpt-4o-mini", dest="model_type", help="model_type: [gpt-4o-mini, gpt-4-turbo, gemma2, exaone]")
@@ -311,7 +308,7 @@ def main():
     args = parser.parse_args()
 
     data_dir = args.data_dir
-    sum_type = args.summary_types
+    sum_types = args.summary_types
     promptor = load_model(args)
     # inst_maker = mk_inst_for_meeting_summary
     inst_maker = mk_inst_for_meeting_summary_new
@@ -326,97 +323,102 @@ def main():
         data_path = Path(args.root_dir) / args.data_dir / data_type / "test"
         data_dir_list, json_lst  = load_data(data_path)
 
-        if args.summary_types == "total_summary":
-            if data_type == "timbel":
-                sum_range = "200~400"
-            elif data_type == "datamaker":
-                sum_range = "50~200"
-        elif args.summary_types == "topic_total_summary":
-            sum_range = "50~400"
-        elif args.summary_types == "topic_summary":
-            sum_range = "200~300"
+        for sum_type in sum_types:
+            if sum_type == "total_summary":
+                if data_type == "timbel":
+                    sum_range = "200~400"
+                elif data_type == "datamaker":
+                    sum_range = "50~200"
+            elif sum_type == "topic_summary":
+                sum_range = "200~300"
 
-        if args.pipeline_method in ['util_llm', 'merge_exs', 'only_encoder']:
-            multidyle_config = Config()
-            # use multidyle encoder
-            multidyle_data_type = data_type.split('-')[0]
-            multidyle_config.retriever_name_or_path = "klue/roberta-large"
-            multidyle_config.eval_model_dir = '/kilab/models/summarization/multidyle/encoder/epochs_1--val_26.3946'
-            multidyle_config.test_type = multidyle_data_type
-            multidyle_config.dataset = [f'/kilab/data/etri/{data_dir}/{multidyle_data_type}/']
-            if args.summary_types == "total_summary":
-                multidyle_config.data_type = f"{multidyle_data_type}-onlytotal"
-            elif args.summary_types == "topic_total_summary":
-                multidyle_config.data_type = f"{multidyle_data_type}-no_speaker"
-            elif args.summary_types == "topic_summary":
-                multidyle_config.data_type = f"{multidyle_data_type}-onlytopic"
-            multidyle_ex_ids = multidyle_test(multidyle_config)
+            if args.pipeline_method in ['util_llm', 'merge_exs', 'only_encoder']:
+                multidyle_config = Config()
+                # use multidyle encoder
+                multidyle_data_type = data_type.split('-')[0]
+                multidyle_config.retriever_name_or_path = "klue/roberta-large"
+                multidyle_config.eval_model_dir = '/kilab/models/summarization/multidyle/encoder/epochs_1--val_26.3946'
+                multidyle_config.test_type = multidyle_data_type
+                multidyle_config.dataset = [f'/kilab/data/etri/{data_dir}/{multidyle_data_type}/']
+                if sum_type == "total_summary":
+                    multidyle_config.data_type = f"{multidyle_data_type}-onlytotal"
+                elif sum_type == "topic_summary":
+                    multidyle_config.data_type = f"{multidyle_data_type}-onlytopic"
+                elif len(sum_types) > 1 and "topic_summary" in sum_types and "total_summary" in sum_types:
+                    multidyle_config.data_type = f"{multidyle_data_type}-no_speaker"
+                multidyle_ex_ids = multidyle_test(multidyle_config)
 
-            multidyle_ex_ids = [sorted(inner_lst) for inner_lst in multidyle_ex_ids]
+                multidyle_ex_ids = [sorted(inner_lst) for inner_lst in multidyle_ex_ids]
 
-        if args.summary_types == "topic_summary":
-            use_cot = False
-        else: use_cot = True
+            if sum_type == "topic_summary":
+                use_cot = False
+            else: use_cot = True
 
-        total_len = 0
-        i = 0
-        scores_dict = {}
-        all_aug_ids_lst, all_gold_ids_lst = [], []
-        for json_obj in tqdm(json_lst, total=len(json_lst), desc="json loop"):
-            scores_dict_json = {}
-            ret_obj = deepcopy(json_obj)
+            total_len = 0
+            i = 0
+            scores_dict = {}
+            all_aug_ids_lst, all_gold_ids_lst = [], []
+            for json_obj in tqdm(json_lst, total=len(json_lst), desc="json loop"):
+                scores_dict_json = {}
+                ret_obj = deepcopy(json_obj)
 
-            # get topic or make topic-CoT
-            topic_input_lst = mk_topic(promptor, json_obj, use_cot, sum_type)
+                # get topic or make topic-CoT
+                topic_input_lst = mk_topic(promptor, json_obj, use_cot, sum_type)
 
-            # get gold extractive and abstractive summary
-            gold_ids_lst = get_gold_ex_sum(json_obj, sum_type)
-            gold_sum_lst, tokenized_gold_sum_lst = get_gold_asum(json_obj, sum_type)
+                # get gold extractive and abstractive summary
+                gold_ids_lst = get_gold_ex_sum(json_obj, sum_type)
+                gold_sum_lst, tokenized_gold_sum_lst = get_gold_asum(json_obj, sum_type)
 
-            # do extractive summarization
-            if args.pipeline_method in ['util_llm']:
-                aug_ids_lst = do_ext_sum(promptor, json_obj, topic_input_lst, multidyle_ex_ids[i])
-            elif args.pipeline_method == 'merge_exs':
-                aug_ids_lst = do_ext_sum(promptor, json_obj, topic_input_lst, multidyle_ex_ids[i])
-                ex_ids_lst = [list(set(n1 + n2)) for n1, n2 in zip(multidyle_ex_ids[i], aug_ids_lst)]
-                aug_ids_lst = ex_ids_lst
-            elif args.pipeline_method in ['only_encoder']:
-                aug_ids_lst = [multidyle_ex_ids[i]]
-            else:
-                aug_ids_lst = do_ext_sum(promptor, json_obj, topic_input_lst)
+                # do extractive summarization
+                if args.pipeline_method in ['util_llm']:
+                    aug_ids_lst = do_ext_sum(promptor, json_obj, topic_input_lst, multidyle_ex_ids[i])
+                elif args.pipeline_method == 'merge_exs':
+                    aug_ids_lst = do_ext_sum(promptor, json_obj, topic_input_lst, multidyle_ex_ids[i])
+                    ex_ids_lst = [list(set(n1 + n2)) for n1, n2 in zip(multidyle_ex_ids[i], aug_ids_lst)]
+                    aug_ids_lst = ex_ids_lst
+                elif args.pipeline_method in ['only_encoder']:
+                    aug_ids_lst = [multidyle_ex_ids[i]]
+                elif args.pipeline_method in ['only_gen']:
+                    pass
+                else:
+                    aug_ids_lst = do_ext_sum(promptor, json_obj, topic_input_lst)
 
-            # make srouce with extractive summary ids
-            src_lst = mk_src_with_exids(json_obj, aug_ids_lst, sum_type)
+                # make srouce with extractive summary ids
+                if args.pipeline_method in ['only_gen']:
+                    dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in json_obj['dialogue']])
+                    src_lst = [dialog_str] * len(topic_input_lst)
+                else:
+                    src_lst = mk_src_with_exids(json_obj, aug_ids_lst)
 
-            # do abstractive summarization
-            output_sum_lst, tokenized_output_sum_lst = do_abs_sum(src_lst, topic_input_lst, summary_sample, sum_range, inst_maker, promptor)
-            total_len += len(src_lst)
+                # do abstractive summarization
+                output_sum_lst, tokenized_output_sum_lst = do_abs_sum(src_lst, topic_input_lst, summary_sample, sum_range, inst_maker, promptor)
+                total_len += len(src_lst)
 
-            save_sum_result(ret_obj, output_sum_lst, sum_type)
-            
-            # scoring
-            ex_eval(aug_ids_lst, gold_ids_lst)
-            for src, output_sum, gold_sum, tok_output_sum, tok_gold_sum in zip(src_lst, output_sum_lst, gold_sum_lst, tokenized_output_sum_lst, tokenized_gold_sum_lst):
-                tok_output_sum = tok_output_sum.replace('##', '')
-                tok_gold_sum = tok_gold_sum.replace('##', '')
-                score_dict = gather_rouge(tok_output_sum, tok_gold_sum, scores_dict, metric)
-                _ = gather_rouge(tok_output_sum, tok_gold_sum, scores_dict_json, metric)
+                # save_sum_result(ret_obj, output_sum_lst, sum_type)
+                
+                # scoring
+                ex_eval(aug_ids_lst, gold_ids_lst)
+                for src, output_sum, gold_sum, tok_output_sum, tok_gold_sum in zip(src_lst, output_sum_lst, gold_sum_lst, tokenized_output_sum_lst, tokenized_gold_sum_lst):
+                    tok_output_sum = tok_output_sum.replace('##', '')
+                    tok_gold_sum = tok_gold_sum.replace('##', '')
+                    score_dict = gather_rouge(tok_output_sum, tok_gold_sum, scores_dict, metric)
+                    _ = gather_rouge(tok_output_sum, tok_gold_sum, scores_dict_json, metric)
 
-                # print
-                # evaluation for extractive summary 
-                print(score_dict)
-                print()
-                print(f"Input text: {src}")
-                print(f"Output summary: {output_sum}")
-                print(f"Gold Output summary: {gold_sum}\n\n\n")
+                    # print
+                    # evaluation for extractive summary 
+                    print(score_dict)
+                    print()
+                    print(f"Input text: {src}")
+                    print(f"Output summary: {output_sum}")
+                    print(f"Gold Output summary: {gold_sum}\n\n\n")
 
-            print("JSON SCORE:")
-            avg_rouge(scores_dict_json, len(src_lst))
-            print_rouge(scores_dict_json)
+                print("JSON SCORE:")
+                avg_rouge(scores_dict_json, len(src_lst))
+                print_rouge(scores_dict_json)
 
-            all_aug_ids_lst += aug_ids_lst
-            all_gold_ids_lst += gold_ids_lst
-            i += 1
+                all_aug_ids_lst += aug_ids_lst
+                all_gold_ids_lst += gold_ids_lst
+                i += 1
 
         print("ALL SCORE:")
         ex_eval(all_aug_ids_lst, all_gold_ids_lst)
