@@ -18,6 +18,14 @@ data_dir: dataset directory name [str] -> ex) {root_dir} / {data_dir}
 save_dir: results save directory [str]
 model_type: type of LLM model [str]
 pipeline_method: summarization pipeline method
-    1) only_llm: extractive summary with LLM -> abstractive summary
-    2) only_encoder: extractive summary with 
+    1) only_llm: extractive summary with LLM -> abstractive LLM summary
+    2) only_encoder: extractive summary with encoder -> abstractive LLM summary
+    3) util_llm: extractive summary with encoder -> extractive summary with LLM -> abstractive LLM summary
+    4) merge_exs: extractive summary with encoder + extractive summary with LLM -> abstractive LLM summary
+    5) only_gen: only abstractive LLM summary without extractive summary
+```
+
+## perform do_eval_meetsum.py
+```
+python do_eval_meetsum.py -dt timbel -st topic_summary -pm only_gen
 ```
