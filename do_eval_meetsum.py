@@ -418,12 +418,14 @@ def main():
                 avg_rouge(scores_dict_json, len(src_lst))
                 print_rouge(scores_dict_json)
 
-                all_aug_ids_lst += aug_ids_lst
+                if args.pipeline_method in ['only_gen']:
+                    all_aug_ids_lst += aug_ids_lst
                 all_gold_ids_lst += gold_ids_lst
                 i += 1
 
         print("ALL SCORE:")
-        ex_eval(all_aug_ids_lst, all_gold_ids_lst)
+        if args.pipeline_method in ['only_gen']:
+            ex_eval(all_aug_ids_lst, all_gold_ids_lst)
         avg_rouge(scores_dict, total_len)
         print_rouge(scores_dict)
 
