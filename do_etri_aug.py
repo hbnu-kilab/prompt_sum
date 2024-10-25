@@ -309,6 +309,7 @@ def view_data_statistics(args):
                         id_len += len(sent_ids)
                         cnt_data += 1
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-rd", "--root_dir", default="/kilab/data/etri", dest="root_dir") 
