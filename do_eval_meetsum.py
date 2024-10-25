@@ -16,6 +16,7 @@ from eval.clean_text import postprocess_text, clean_data_ko
 
 # import evaluate
 from korouge_score import rouge_scorer
+from copy import deepcopy
 
 import sys
 sys.path.append('/home/parkce/git-hubs/')
@@ -267,8 +268,6 @@ def do_abs_sum(src_lst, topic_lst, summary_sample, sum_range, inst_maker, prompt
     total_len = len(src_lst)
 
     for i, (src, topic) in tqdm(enumerate(zip(src_lst, topic_lst)), total=total_len, desc="do_abs_sum"):
-        # e_total_len = len(srcs)
-        # for src, topic in tqdm(enumerate(zip(srcs, topics)), total=e_total_len):
         instruction = inst_maker(src, topic, summary_sample, sum_range)
         
         output_sum = "I'm sorry"
@@ -282,18 +281,22 @@ def do_abs_sum(src_lst, topic_lst, summary_sample, sum_range, inst_maker, prompt
             if cnt > 3: break
 
         output_sum = output_sum.split("[요약]")[-1].replace('\n', ' ')
-
         output_sum = clean_data_ko(output_sum)
-        # output_sum, sum = postprocess_text(output_sum, sum)
 
         output_sum_lst.append(output_sum)
         tokenized_output_sum = ' '.join(tokenizer.tokenize(output_sum))
         tokenized_output_sum_lst.append(tokenized_output_sum)
-            
 
     return output_sum_lst, tokenized_output_sum_lst
 
 
+def save_sum_result(ret_obj, output_sum_lst, sum_type):
+    if sum_type == "total_summary":
+        asum_type = "total_asummary"
+    elif sum_type == "topic_summary":
+        asum_type = "topic_asummary"
+
+    ret_obj[sum_type][asum_type] = output_sum_lst
 
 def main():
     parser = argparse.ArgumentParser()
@@ -331,7 +334,7 @@ def main():
         elif args.summary_types == "topic_total_summary":
             sum_range = "50~400"
         elif args.summary_types == "topic_summary":
-            sum_range = "50~100"
+            sum_range = "200~300"
 
         if args.pipeline_method in ['util_llm', 'merge_exs', 'only_encoder']:
             multidyle_config = Config()
@@ -351,6 +354,9 @@ def main():
 
             multidyle_ex_ids = [sorted(inner_lst) for inner_lst in multidyle_ex_ids]
 
+        if args.summary_types == "topic_summary":
+            use_cot = False
+        else: use_cot = True
 
         total_len = 0
         i = 0
@@ -358,8 +364,9 @@ def main():
         all_aug_ids_lst, all_gold_ids_lst = [], []
         for json_obj in tqdm(json_lst, total=len(json_lst), desc="json loop"):
             scores_dict_json = {}
+            ret_obj = deepcopy(json_obj)
+
             # get topic or make topic-CoT
-            use_cot = True
             topic_input_lst = mk_topic(promptor, json_obj, use_cot, sum_type)
 
             # get gold extractive and abstractive summary
@@ -384,6 +391,8 @@ def main():
             # do abstractive summarization
             output_sum_lst, tokenized_output_sum_lst = do_abs_sum(src_lst, topic_input_lst, summary_sample, sum_range, inst_maker, promptor)
             total_len += len(src_lst)
+
+            save_sum_result(ret_obj, output_sum_lst, sum_type)
             
             # scoring
             ex_eval(aug_ids_lst, gold_ids_lst)
