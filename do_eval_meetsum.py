@@ -304,7 +304,7 @@ def main():
     parser.add_argument("-s", "--save_dir", default="./result/etri", dest="save_dir") 
     parser.add_argument("-m", "--model_type", default="gpt-4o-mini", dest="model_type", help="model_type: [gpt-4o-mini, gpt-4-turbo, gemma2, exaone]")
     # parser.add_argument("-cda", "--do_cda", dest="do_cda", action="store_true")
-    parser.add_argument("-pm", "--pipeline_method", default="only_llm", dest="pipeline_method", help="model_type: [only_llm, only_encoder, util_llm, merge_exs]")
+    parser.add_argument("-pm", "--pipeline_method", default="only_llm", dest="pipeline_method", help="model_type: [only_llm: llm e-sum -> llm a-sum, only_encoder: roberta -> llm a-sum, util_llm: roberta -> llm e-sum -> llm a-sum, merge_exs: reberta + llm e-sum -> llm a-sum, only_gen: only a-sum]")
     args = parser.parse_args()
 
     data_dir = args.data_dir
