@@ -397,7 +397,9 @@ def main():
                 # save_sum_result(ret_obj, output_sum_lst, sum_type)
                 
                 # scoring
-                ex_eval(aug_ids_lst, gold_ids_lst)
+                if args.pipeline_method not in ['only_gen']:
+                    ex_eval(aug_ids_lst, gold_ids_lst)
+
                 for src, output_sum, gold_sum, tok_output_sum, tok_gold_sum in zip(src_lst, output_sum_lst, gold_sum_lst, tokenized_output_sum_lst, tokenized_gold_sum_lst):
                     tok_output_sum = tok_output_sum.replace('##', '')
                     tok_gold_sum = tok_gold_sum.replace('##', '')
