@@ -6,7 +6,7 @@ from promptor import Promptor, ExaonePromptor, Gemma2Promptor, ChatGPTPromptor
 
 from promptor.mk_instruction import mk_inst_exsum_meetsum, mk_inst_for_meeting_summary, \
                                     mk_inst_exsum_w_exids, mk_inst_for_summary, \
-                                    mk_inst_for_meeting_summary_new
+                                    mk_inst_for_meeting_summary_new, mk_inst_for_meeting_summary_v5
 
 import torch
 import argparse
@@ -377,7 +377,7 @@ def main():
     sum_types = args.summary_types
     promptor = load_model(args)
     # inst_maker = mk_inst_for_meeting_summary
-    inst_maker = mk_inst_for_meeting_summary_new
+    inst_maker = mk_inst_for_meeting_summary_v5
     # mk_inst_for_summary
 
     # metric = evaluate.combine(["bleu", "rouge", "meteor"])
