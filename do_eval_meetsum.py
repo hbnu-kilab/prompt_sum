@@ -467,7 +467,11 @@ def main():
                         aug_ids_lst = do_ext_sum(promptor, json_obj, topic_input_lst, multidyle_ex_ids[i])
                     elif args.pipeline_method == 'merge_exs':
                         aug_ids_lst = do_ext_sum(promptor, json_obj, topic_input_lst, multidyle_ex_ids[i])
-                        ex_ids_lst = [list(set(n1 + n2)) for n1, n2 in zip(multidyle_ex_ids[i], aug_ids_lst)]
+                        m_j = 0
+                        ex_ids_lst = []
+                        for aug_ids in aug_ids_lst:
+                            ex_ids_lst.append(list(set(multidyle_ex_ids[m_j] + aug_ids)))
+                        # ex_ids_lst = [list(set(n1 + n2)) for n1, n2 in zip(multidyle_ex_ids[i], aug_ids_lst)]
                         aug_ids_lst = ex_ids_lst
                     elif args.pipeline_method in ['only_encoder']:
                         aug_ids_lst = [multidyle_ex_ids[i]]
