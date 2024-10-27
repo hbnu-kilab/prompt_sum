@@ -467,6 +467,7 @@ def main():
                     if args.pipeline_method not in ['only_gen']:
                         ex_eval(aug_ids_lst, gold_ids_lst)
 
+                    assert len(src) == len(output_sum_lst)
                     for src, output_sum, gold_sum, tok_output_sum, tok_gold_sum in zip(src_lst, output_sum_lst, gold_sum_lst, tokenized_output_sum_lst, tokenized_gold_sum_lst):
                         tok_output_sum = tok_output_sum.replace('##', '')
                         tok_gold_sum = tok_gold_sum.replace('##', '')
@@ -477,7 +478,8 @@ def main():
                         # evaluation for extractive summary 
                         print(score_dict)
                         print()
-                        print(f"Input text: {src}")
+                        if args.pipeline_method not in ['only_gen']:
+                            print(f"Input text: {src}")
                         print(f"Output summary: {output_sum}")
                         print(f"Gold Output summary: {gold_sum}\n\n\n")
 
