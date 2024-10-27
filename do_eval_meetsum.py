@@ -431,7 +431,7 @@ def main():
                         multidyle_config.data_type = f"{multidyle_data_type}-no_speaker"
                     multidyle_ex_ids = multidyle_test(multidyle_config, file_names=data_dir_list)
 
-                    multidyle_ex_ids = [sorted(inner_lst) for inner_lst in multidyle_ex_ids]
+                    # multidyle_ex_ids = [sorted(inner_lst) for inner_lst in multidyle_ex_ids]
                     all_multidyle_ex_ids_lst += multidyle_ex_ids
 
 
@@ -470,7 +470,7 @@ def main():
                         m_j = 0
                         ex_ids_lst = []
                         for aug_ids in aug_ids_lst:
-                            ex_ids_lst.append(sorted(list(set(multidyle_ex_ids[m_j] + aug_ids))))
+                            ex_ids_lst.append(list(set(multidyle_ex_ids[m_j] + aug_ids)))
                         # ex_ids_lst = [list(set(n1 + n2)) for n1, n2 in zip(multidyle_ex_ids[i], aug_ids_lst)]
                         # mk_inst_exsum_wo_noise(sent, ex_ids_lst)
                         aug_ids_lst = ex_ids_lst
