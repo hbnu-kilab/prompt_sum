@@ -410,6 +410,13 @@ def main():
                     multidyle_config.eval_model_dir = '/kilab/models/summarization/multidyle/encoder/epochs_1--val_26.3946'
                     multidyle_config.test_type = multidyle_data_type
                     multidyle_config.dataset = [f'/kilab/data/etri/{data_dir}/{multidyle_data_type}/']
+                    
+                    for ex_data_dir in multidyle_config.dataset:
+                        if os.path.exists(ex_data_dir):
+                            for f_name in os.scandir(ex_data_dir):
+                                if f_name.split('_')[-1] in ["test", "val"]:
+                                    os.remove(f_name.path)
+
                     if sum_type == "total_summary":
                         multidyle_config.data_type = f"{multidyle_data_type}-onlytotal"
                     elif sum_type == "topic_summary":
