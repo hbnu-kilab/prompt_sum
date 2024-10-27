@@ -407,8 +407,13 @@ def main():
                     multidyle_config = Config()
                     # use multidyle encoder
                     multidyle_data_type = data_type.split('-')[0]
-                    multidyle_config.retriever_name_or_path = "klue/roberta-large"
-                    multidyle_config.eval_model_dir = '/kilab/models/summarization/multidyle/encoder/epochs_1--val_26.3946'
+                    if False:
+                        multidyle_config.retriever_name_or_path = "klue/roberta-large"
+                        multidyle_config.eval_model_dir = '/kilab/models/summarization/multidyle/encoder/epochs_1--val_26.3946'
+                    else:
+                        multidyle_config.retriever_name_or_path = "klue/roberta-small"
+                        multidyle_config.eval_model_dir = '/kilab/models/summarization/multidyle/encoder/epochs_4--val_28.6667'
+
                     multidyle_config.test_type = multidyle_data_type
                     multidyle_config.dataset = [f'/kilab/data/etri/{data_dir}/{multidyle_data_type}/']
                     
