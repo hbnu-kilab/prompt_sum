@@ -387,6 +387,7 @@ def main():
 
     scores_dict = {}
     all_aug_ids_lst, all_gold_ids_lst = [], []
+    all_multidyle_ex_ids_lst = []
     total_len = 0
     for data_type in args.data_types:
         for data_phase in args.data_phases:
@@ -414,7 +415,7 @@ def main():
                     for ex_data_dir in multidyle_config.dataset:
                         if os.path.exists(ex_data_dir):
                             for f_name in os.scandir(ex_data_dir):
-                                if "_val" in f_name.path or "_test" in f_name.path :
+                                if "_val" in f_name.path or "_test" in f_name.path:
                                     os.remove(f_name.path)
 
                     if sum_type == "total_summary":
@@ -426,6 +427,7 @@ def main():
                     multidyle_ex_ids = multidyle_test(multidyle_config)
 
                     multidyle_ex_ids = [sorted(inner_lst) for inner_lst in multidyle_ex_ids]
+                    all_multidyle_ex_ids_lst += multidyle_ex_ids
 
 
                 # Abstractive summary
@@ -512,13 +514,16 @@ def main():
                     i += 1
 
     print("ALL SCORE:")
-    if args.pipeline_method not in ['only_gen']:
-        ex_eval(all_aug_ids_lst, all_gold_ids_lst)
                         
     avg_rouge(scores_dict, total_len)
     print_rouge(scores_dict)
 
     calc_asum_score(args, metric)
+    
+    if args.pipeline_method not in ['only_gen']:
+        if "encoder" in args.pipeline_method:
+            ex_eval(all_multidyle_ex_ids_lst, all_gold_ids_lst)
+        ex_eval(all_aug_ids_lst, all_gold_ids_lst)
 
 if __name__ == "__main__":
     main()
