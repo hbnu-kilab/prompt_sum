@@ -309,7 +309,7 @@ def save_sum_result(ret_obj, output_sum_lst, sum_type, pipeline_method,
 
 def do_tokenization_sum(sum_text, tok_method="bpe"):
     if tok_method in ["bpe"]:
-        tokenized_sum_text = ' '.join(tokenizer.tokenize(sum_text))
+        tokenized_sum_text = ' '.join(tokenizer.tokenize(sum_text)).replace('##', '')
 
     return tokenized_sum_text
 
@@ -324,6 +324,7 @@ def calc_asum_score(args, metric):
             gold_path = Path(args.root_dir) / args.data_dir / data_type / data_phase
             _, gold_json_lst  = load_data(gold_path)
 
+            scores_dict_json = {}
             for sum_type in sum_types:
                 pred_path = Path(f'./{Path(args.save_dir)/data_type}') / f'{data_phase}' / sum_type / args.pipeline_method
                 _, pred_json_lst  = load_data(pred_path)
@@ -338,7 +339,12 @@ def calc_asum_score(args, metric):
                     for pred_sums, gold_sums in zip(pred_dict[sum_type], gold_dict[sum_type]):
                         gold_tok = do_tokenization_sum(gold_sums[asum_type])
                         pred_tok = do_tokenization_sum(pred_sums[asum_type])
-                        _ = gather_rouge(pred_tok, gold_tok, scores_dict, metric)
+                        score_dict = gather_rouge(pred_tok, gold_tok, scores_dict, metric)
+                        _ = gather_rouge(pred_tok, gold_tok, scores_dict_json, metric)
+
+                        print(score_dict)
+                        print(f"Output summary: {pred_sums[asum_type]}")
+                        print(f"Gold Output summary: {gold_sums[asum_type]}\n\n\n")
 
     print("ALL Abstractive Summary Score:")
     avg_rouge(scores_dict, total_len)
