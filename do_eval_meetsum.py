@@ -490,9 +490,6 @@ def main():
                     save_sum_result(ret_obj, output_sum_lst, sum_type, save_dir, data_dir_list[j_i])
                     
                     # scoring
-                    if args.pipeline_method not in ['only_gen']:
-                        ex_eval(aug_ids_lst, gold_ids_lst)
-
                     assert len(src_lst) == len(output_sum_lst)
                     for src, output_sum, gold_sum, tok_output_sum, tok_gold_sum in zip(src_lst, output_sum_lst, gold_sum_lst, tokenized_output_sum_lst, tokenized_gold_sum_lst):
                         tok_output_sum = tok_output_sum.replace('##', '')
@@ -510,6 +507,8 @@ def main():
                         print(f"Gold Output summary: {gold_sum}\n")
 
                     print("JSON SCORE:")
+                    if args.pipeline_method not in ['only_gen']:
+                        ex_eval(aug_ids_lst, gold_ids_lst)
                     avg_rouge(scores_dict_json, len(src_lst))
                     print_rouge(scores_dict_json)
 
@@ -528,7 +527,8 @@ def main():
     if args.pipeline_method not in ['only_gen']:
         if "encoder" in args.pipeline_method:
             ex_eval(all_multidyle_ex_ids_lst, all_gold_ids_lst)
-        ex_eval(all_aug_ids_lst, all_gold_ids_lst)
+        else:
+            ex_eval(all_aug_ids_lst, all_gold_ids_lst)
 
 if __name__ == "__main__":
     main()
