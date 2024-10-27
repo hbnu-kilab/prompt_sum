@@ -431,7 +431,7 @@ def main():
                         multidyle_config.data_type = f"{multidyle_data_type}-no_speaker"
                     multidyle_ex_ids = multidyle_test(multidyle_config, file_names=data_dir_list)
 
-                    # multidyle_ex_ids = [sorted(inner_lst) for inner_lst in multidyle_ex_ids]
+                    multidyle_ex_ids = [sorted(inner_lst) for inner_lst in multidyle_ex_ids]
                     all_multidyle_ex_ids_lst += multidyle_ex_ids
 
 
