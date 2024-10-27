@@ -21,6 +21,7 @@ from copy import deepcopy
 import sys
 sys.path.append('/home/parkce/git-hubs/')
 sys.path.append('/home/parkce/git-hubs/multidyle')
+import json
 from multidyle.test_multi_dyle import test as multidyle_test
 from multidyle.config import Config 
 
@@ -287,7 +288,12 @@ def do_abs_sum(src_lst, topic_lst, summary_sample, sum_range, inst_maker, prompt
     return output_sum_lst, tokenized_output_sum_lst
 
 
-def save_sum_result(ret_obj, output_sum_lst, sum_type):
+def save_sum_result(ret_obj, output_sum_lst, sum_type, save_path, data_type, data_phase, data_path):
+    title, file_ext = os.path.splitext(data_path.split('/')[-1])
+    save_dir = Path(f'./{save_path/data_type}') / f'{data_phase}'
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
     if sum_type == "total_summary":
         asum_type = "total_asummary"
     elif sum_type == "topic_summary":
@@ -295,19 +301,25 @@ def save_sum_result(ret_obj, output_sum_lst, sum_type):
 
     ret_obj[sum_type][asum_type] = output_sum_lst
 
+    with open(save_dir / (f'{title}.' + f'sum_result{file_ext}'), 'w') as of:
+        json.dump(ret_obj, of, indent=4, ensure_ascii=False)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-rd", "--root_dir", default="/kilab/data/etri", dest="root_dir") 
     parser.add_argument("-dt", "--data_types", nargs='+', default=["timbel", "datamaker-2023-all"], dest="data_types", help="--data_types timbel datamaker-2023-all", type=str) 
+    parser.add_argument("-dp", "--data_phases", nargs='+', default=["train", "val", "test"], dest="data_phases", help="--data_phases train val test", type=str) 
     parser.add_argument("-st", "--summary_types", nargs='+', default=["total_summary"], dest="summary_types", help="--summary_types topic_summary", type=str) 
     parser.add_argument("-d", "--data_dir", default="summarization/ko", dest="data_dir")
-    parser.add_argument("-s", "--save_dir", default="./result/etri", dest="save_dir") 
+    parser.add_argument("-s", "--save_dir", default="./result/sum_eval", dest="save_dir") 
     parser.add_argument("-m", "--model_type", default="gpt-4o-mini", dest="model_type", help="model_type: [gpt-4o-mini, gpt-4-turbo, gemma2, exaone]")
     # parser.add_argument("-cda", "--do_cda", dest="do_cda", action="store_true")
     parser.add_argument("-pm", "--pipeline_method", default="only_llm", dest="pipeline_method", help="model_type: [only_llm: llm e-sum -> llm a-sum, only_encoder: roberta -> llm a-sum, util_llm: roberta -> llm e-sum -> llm a-sum, merge_exs: reberta + llm e-sum -> llm a-sum, only_gen: only a-sum]")
     args = parser.parse_args()
 
     data_dir = args.data_dir
+    save_path = Path(args.save_dir)
     sum_types = args.summary_types
     promptor = load_model(args)
     # inst_maker = mk_inst_for_meeting_summary
@@ -320,108 +332,110 @@ def main():
     summary_sample = "AI와 챗GPT와 같은 기술은 직업 변화와 교육 방향성에 영향을 미친다. 챗GPT의 발달로 일정한 패턴으로 움직이는 직군이나 부가가치가 높은 일이 먼저 대체될 것이다. 챗GPT에 대한 기대가 높지만 현재는 현실적인 한계로 인해 부정적인 시각도 많다. 인공지능도 경험과 데이터 축적으로 인간의 판단과 유사한 정확도를 갖출 수 있을 것이며 점차 인공지능에 대한 인식이 긍정적으로 변화할 것이다. 기술이 진화됨에 따라 그에 맞는 능력을 갖추고 윤리적인 부분들을 바탕으로 최대한 활용할 수 있는 방향으로 나아가야 한다."
 
     for data_type in args.data_types:
-        data_path = Path(args.root_dir) / args.data_dir / data_type / "test"
-        data_dir_list, json_lst  = load_data(data_path)
+        for data_phase in args.data_phases:
+            data_path = Path(args.root_dir) / args.data_dir / data_type / data_phase
+            data_dir_list, json_lst  = load_data(data_path)
 
-        for sum_type in sum_types:
-            if sum_type == "total_summary":
-                if data_type == "timbel":
-                    sum_range = "200~400"
-                elif data_type == "datamaker":
-                    sum_range = "50~200"
-            elif sum_type == "topic_summary":
-                sum_range = "200~300"
-
-            if args.pipeline_method in ['util_llm', 'merge_exs', 'only_encoder']:
-                multidyle_config = Config()
-                # use multidyle encoder
-                multidyle_data_type = data_type.split('-')[0]
-                multidyle_config.retriever_name_or_path = "klue/roberta-large"
-                multidyle_config.eval_model_dir = '/kilab/models/summarization/multidyle/encoder/epochs_1--val_26.3946'
-                multidyle_config.test_type = multidyle_data_type
-                multidyle_config.dataset = [f'/kilab/data/etri/{data_dir}/{multidyle_data_type}/']
+            for sum_type in sum_types:
                 if sum_type == "total_summary":
-                    multidyle_config.data_type = f"{multidyle_data_type}-onlytotal"
+                    if data_type == "timbel":
+                        sum_range = "200~400"
+                    elif data_type == "datamaker":
+                        sum_range = "50~200"
                 elif sum_type == "topic_summary":
-                    multidyle_config.data_type = f"{multidyle_data_type}-onlytopic"
-                elif len(sum_types) > 1 and "topic_summary" in sum_types and "total_summary" in sum_types:
-                    multidyle_config.data_type = f"{multidyle_data_type}-no_speaker"
-                multidyle_ex_ids = multidyle_test(multidyle_config)
+                    sum_range = "200~300"
 
-                multidyle_ex_ids = [sorted(inner_lst) for inner_lst in multidyle_ex_ids]
+                if args.pipeline_method in ['util_llm', 'merge_exs', 'only_encoder']:
+                    multidyle_config = Config()
+                    # use multidyle encoder
+                    multidyle_data_type = data_type.split('-')[0]
+                    multidyle_config.retriever_name_or_path = "klue/roberta-large"
+                    multidyle_config.eval_model_dir = '/kilab/models/summarization/multidyle/encoder/epochs_1--val_26.3946'
+                    multidyle_config.test_type = multidyle_data_type
+                    multidyle_config.dataset = [f'/kilab/data/etri/{data_dir}/{multidyle_data_type}/']
+                    if sum_type == "total_summary":
+                        multidyle_config.data_type = f"{multidyle_data_type}-onlytotal"
+                    elif sum_type == "topic_summary":
+                        multidyle_config.data_type = f"{multidyle_data_type}-onlytopic"
+                    elif len(sum_types) > 1 and "topic_summary" in sum_types and "total_summary" in sum_types:
+                        multidyle_config.data_type = f"{multidyle_data_type}-no_speaker"
+                    multidyle_ex_ids = multidyle_test(multidyle_config)
 
-            if sum_type == "topic_summary":
-                use_cot = False
-            else: use_cot = True
+                    multidyle_ex_ids = [sorted(inner_lst) for inner_lst in multidyle_ex_ids]
 
-            total_len = 0
-            i = 0
-            scores_dict = {}
-            all_aug_ids_lst, all_gold_ids_lst = [], []
-            for json_obj in tqdm(json_lst, total=len(json_lst), desc="json loop"):
-                scores_dict_json = {}
-                ret_obj = deepcopy(json_obj)
+                if sum_type == "topic_summary":
+                    use_cot = False
+                else: use_cot = True
 
-                # get topic or make topic-CoT
-                topic_input_lst = mk_topic(promptor, json_obj, use_cot, sum_type)
+                total_len = 0
+                i = 0
+                scores_dict = {}
+                all_aug_ids_lst, all_gold_ids_lst = [], []
+                for j_i, json_obj in tqdm(enumerate(json_lst), total=len(json_lst), desc="json loop"):
 
-                # get gold extractive and abstractive summary
-                gold_ids_lst = get_gold_ex_sum(json_obj, sum_type)
-                gold_sum_lst, tokenized_gold_sum_lst = get_gold_asum(json_obj, sum_type)
+                    scores_dict_json = {}
+                    ret_obj = deepcopy(json_obj)
 
-                # do extractive summarization
-                if args.pipeline_method in ['util_llm']:
-                    aug_ids_lst = do_ext_sum(promptor, json_obj, topic_input_lst, multidyle_ex_ids[i])
-                elif args.pipeline_method == 'merge_exs':
-                    aug_ids_lst = do_ext_sum(promptor, json_obj, topic_input_lst, multidyle_ex_ids[i])
-                    ex_ids_lst = [list(set(n1 + n2)) for n1, n2 in zip(multidyle_ex_ids[i], aug_ids_lst)]
-                    aug_ids_lst = ex_ids_lst
-                elif args.pipeline_method in ['only_encoder']:
-                    aug_ids_lst = [multidyle_ex_ids[i]]
-                elif args.pipeline_method in ['only_gen']:
-                    pass
-                else:
-                    aug_ids_lst = do_ext_sum(promptor, json_obj, topic_input_lst)
+                    # get topic or make topic-CoT
+                    topic_input_lst = mk_topic(promptor, json_obj, use_cot, sum_type)
 
-                # make srouce with extractive summary ids
-                if args.pipeline_method in ['only_gen']:
-                    dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in json_obj['dialogue']])
-                    src_lst = [dialog_str] * len(topic_input_lst)
-                else:
-                    src_lst = mk_src_with_exids(json_obj, aug_ids_lst)
+                    # get gold extractive and abstractive summary
+                    gold_ids_lst = get_gold_ex_sum(json_obj, sum_type)
+                    gold_sum_lst, tokenized_gold_sum_lst = get_gold_asum(json_obj, sum_type)
 
-                # do abstractive summarization
-                output_sum_lst, tokenized_output_sum_lst = do_abs_sum(src_lst, topic_input_lst, summary_sample, sum_range, inst_maker, promptor)
-                total_len += len(src_lst)
+                    # do extractive summarization
+                    if args.pipeline_method in ['util_llm']:
+                        aug_ids_lst = do_ext_sum(promptor, json_obj, topic_input_lst, multidyle_ex_ids[i])
+                    elif args.pipeline_method == 'merge_exs':
+                        aug_ids_lst = do_ext_sum(promptor, json_obj, topic_input_lst, multidyle_ex_ids[i])
+                        ex_ids_lst = [list(set(n1 + n2)) for n1, n2 in zip(multidyle_ex_ids[i], aug_ids_lst)]
+                        aug_ids_lst = ex_ids_lst
+                    elif args.pipeline_method in ['only_encoder']:
+                        aug_ids_lst = [multidyle_ex_ids[i]]
+                    elif args.pipeline_method in ['only_gen']:
+                        pass
+                    else:
+                        aug_ids_lst = do_ext_sum(promptor, json_obj, topic_input_lst)
 
-                # save_sum_result(ret_obj, output_sum_lst, sum_type)
-                
-                # scoring
-                if args.pipeline_method not in ['only_gen']:
-                    ex_eval(aug_ids_lst, gold_ids_lst)
+                    # make srouce with extractive summary ids
+                    if args.pipeline_method in ['only_gen']:
+                        dialog_str = ' '.join([f'[{dial.get("sentence_id")}] {dial.get("sentence")}' for dial in json_obj['dialogue']])
+                        src_lst = [dialog_str] * len(topic_input_lst)
+                    else:
+                        src_lst = mk_src_with_exids(json_obj, aug_ids_lst)
 
-                for src, output_sum, gold_sum, tok_output_sum, tok_gold_sum in zip(src_lst, output_sum_lst, gold_sum_lst, tokenized_output_sum_lst, tokenized_gold_sum_lst):
-                    tok_output_sum = tok_output_sum.replace('##', '')
-                    tok_gold_sum = tok_gold_sum.replace('##', '')
-                    score_dict = gather_rouge(tok_output_sum, tok_gold_sum, scores_dict, metric)
-                    _ = gather_rouge(tok_output_sum, tok_gold_sum, scores_dict_json, metric)
+                    # do abstractive summarization
+                    output_sum_lst, tokenized_output_sum_lst = do_abs_sum(src_lst, topic_input_lst, summary_sample, sum_range, inst_maker, promptor)
+                    total_len += len(src_lst)
 
-                    # print
-                    # evaluation for extractive summary 
-                    print(score_dict)
-                    print()
-                    print(f"Input text: {src}")
-                    print(f"Output summary: {output_sum}")
-                    print(f"Gold Output summary: {gold_sum}\n\n\n")
+                    save_sum_result(ret_obj, output_sum_lst, sum_type, save_path, data_type, data_phase, data_dir_list[j_i])
+                    
+                    # scoring
+                    if args.pipeline_method not in ['only_gen']:
+                        ex_eval(aug_ids_lst, gold_ids_lst)
 
-                print("JSON SCORE:")
-                avg_rouge(scores_dict_json, len(src_lst))
-                print_rouge(scores_dict_json)
+                    for src, output_sum, gold_sum, tok_output_sum, tok_gold_sum in zip(src_lst, output_sum_lst, gold_sum_lst, tokenized_output_sum_lst, tokenized_gold_sum_lst):
+                        tok_output_sum = tok_output_sum.replace('##', '')
+                        tok_gold_sum = tok_gold_sum.replace('##', '')
+                        score_dict = gather_rouge(tok_output_sum, tok_gold_sum, scores_dict, metric)
+                        _ = gather_rouge(tok_output_sum, tok_gold_sum, scores_dict_json, metric)
 
-                if args.pipeline_method not in ['only_gen']:
-                    all_aug_ids_lst += aug_ids_lst
-                all_gold_ids_lst += gold_ids_lst
-                i += 1
+                        # print
+                        # evaluation for extractive summary 
+                        print(score_dict)
+                        print()
+                        print(f"Input text: {src}")
+                        print(f"Output summary: {output_sum}")
+                        print(f"Gold Output summary: {gold_sum}\n\n\n")
+
+                    print("JSON SCORE:")
+                    avg_rouge(scores_dict_json, len(src_lst))
+                    print_rouge(scores_dict_json)
+
+                    if args.pipeline_method not in ['only_gen']:
+                        all_aug_ids_lst += aug_ids_lst
+                    all_gold_ids_lst += gold_ids_lst
+                    i += 1
 
         print("ALL SCORE:")
         if args.pipeline_method not in ['only_gen']:
