@@ -289,7 +289,8 @@ def do_abs_sum(src_lst, topic_lst, summary_sample, sum_range, inst_maker, prompt
 
 
 def save_sum_result(ret_obj, output_sum_lst, sum_type, save_dir, data_path):
-    title, file_ext = os.path.splitext(data_path.split('/')[-1])
+    # title, file_ext = os.path.splitext(data_path.split('/')[-1])
+    title = data_path.split('/')[-1]
 
     if sum_type == "total_summary":
         asum_type = "total_asummary"
@@ -299,7 +300,7 @@ def save_sum_result(ret_obj, output_sum_lst, sum_type, save_dir, data_path):
     for sum_obj, output_sum in zip(ret_obj[sum_type], output_sum_lst):
         sum_obj[asum_type] = output_sum
 
-    with open(save_dir / (f'{title}{file_ext}'), 'w') as of:
+    with open(save_dir / (f'{title}'), 'w') as of:
         json.dump(ret_obj, of, indent=4, ensure_ascii=False)
 
 
