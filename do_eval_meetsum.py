@@ -307,6 +307,15 @@ def save_sum_result(ret_obj, output_sum_lst, sum_type, pipeline_method,
         json.dump(ret_obj, of, indent=4, ensure_ascii=False)
 
 
+def do_tokenization_sum(sum_text_lst):
+    tokenized_sum_text_lst = []
+    for sum_text in sum_text_lst:
+        tokenized_sum_text = ' '.join(tokenizer.tokenize(sum_text))
+        tokenized_sum_text_lst.append(tokenized_sum_text)
+
+    return tokenized_sum_text_lst
+
+
 def calc_asum_score(args, metric):
     sum_types = args.summary_types
 
@@ -329,7 +338,9 @@ def calc_asum_score(args, metric):
                 for pred_dict, gold_dict in tqdm(zip(pred_json_lst, gold_json_lst), total=len(gold_json_lst), desc="eval results"):
                     total_len += 1
                     for pred_sums, gold_sums in zip(pred_dict[sum_type], gold_dict[sum_type]):
-                        _ = gather_rouge(pred_sums[asum_type], gold_sums[asum_type], scores_dict, metric)
+                        gold_tok_lst = do_tokenization_sum(gold_sums[asum_type])
+                        pred_tok_lst = do_tokenization_sum(pred_sums[asum_type])
+                        _ = gather_rouge(pred_tok_lst, gold_tok_lst, scores_dict, metric)
 
     print("ALL Abstractive Summary Score:")
     avg_rouge(scores_dict, total_len)
