@@ -299,7 +299,7 @@ def save_sum_result(ret_obj, output_sum_lst, sum_type, save_dir, data_path):
     for sum_obj, output_sum in zip(ret_obj[sum_type], output_sum_lst):
         sum_obj[asum_type] = output_sum
 
-    with open(save_dir / (f'{title}.' + f'sum_result{file_ext}'), 'w') as of:
+    with open(save_dir / (f'{title}.' + f'{file_ext}'), 'w') as of:
         json.dump(ret_obj, of, indent=4, ensure_ascii=False)
 
 
@@ -319,13 +319,16 @@ def calc_asum_score(args, metric):
         for data_phase in args.data_phases:
             gold_path = Path(args.root_dir) / args.data_dir / data_type / data_phase
             gold_dir_list, gold_json_lst  = load_data(gold_path)
+            g_title_lst = [os.path.splitext(g_path.split('/')[-1])[0] for g_path in gold_dir_list]
 
             scores_dict_json = {}
             inst_len = 0
             for sum_type in sum_types:
                 pred_path = Path(f'./{Path(args.save_dir)/data_type}') / f'{data_phase}' / sum_type / args.pipeline_method
                 pred_dir_list, pred_json_lst  = load_data(pred_path)
-                pred_json_lst = 
+                p_title_dict = {os.path.splitext(g_path.split('/')[-1])[0]:g_i for g_i, g_path in enumerate(pred_dir_list)}
+                
+                pred_json_lst = [pred_json_lst[p_title_dict[g_t]] for g_t in g_title_lst]
 
                 if sum_type == "total_summary":
                     asum_type = "total_asummary"
