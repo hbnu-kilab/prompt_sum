@@ -299,7 +299,8 @@ def save_sum_result(ret_obj, output_sum_lst, sum_type, save_path, data_type, dat
     elif sum_type == "topic_summary":
         asum_type = "topic_asummary"
 
-    ret_obj[sum_type][asum_type] = output_sum_lst
+    for sum_obj, output_sum in zip(ret_obj[sum_type], output_sum_lst):
+        sum_obj[asum_type] = output_sum
 
     with open(save_dir / (f'{title}.' + f'sum_result{file_ext}'), 'w') as of:
         json.dump(ret_obj, of, indent=4, ensure_ascii=False)
