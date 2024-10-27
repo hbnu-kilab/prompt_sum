@@ -315,12 +315,12 @@ def calc_asum_score(args, metric):
     for data_type in args.data_types:
         for data_phase in args.data_phases:
             gold_path = Path(args.root_dir) / args.data_dir / data_type / data_phase
-            pred_path = Path(f'./{Path(args.save_dir)/data_type}') / f'{data_phase}' / sum_type / args.pipeline_method
-
-            _, pred_json_lst  = load_data(pred_path)
             _, gold_json_lst  = load_data(gold_path)
 
             for sum_type in sum_types:
+                pred_path = Path(f'./{Path(args.save_dir)/data_type}') / f'{data_phase}' / sum_type / args.pipeline_method
+                _, pred_json_lst  = load_data(pred_path)
+
                 if sum_type == "total_summary":
                     asum_type = "total_asummary"
                 elif sum_type == "topic_summary":
