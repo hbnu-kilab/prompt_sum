@@ -336,9 +336,9 @@ def calc_asum_score(args, metric):
                     asum_type = "topic_asummary"
 
                 for pred_dict, gold_dict in tqdm(zip(pred_json_lst, gold_json_lst), total=len(gold_json_lst), desc="eval results"):
-                    total_len += 1
-                    inst_len += 1
                     for pred_sums, gold_sums in zip(pred_dict[sum_type], gold_dict[sum_type]):
+                        total_len += 1
+                        inst_len += 1
                         gold_tok = do_tokenization_sum(gold_sums[asum_type])
                         pred_tok = do_tokenization_sum(pred_sums[asum_type])
                         score_dict = gather_rouge(pred_tok, gold_tok, scores_dict, metric)
@@ -467,7 +467,7 @@ def main():
                     if args.pipeline_method not in ['only_gen']:
                         ex_eval(aug_ids_lst, gold_ids_lst)
 
-                    assert len(src) == len(output_sum_lst)
+                    assert len(src_lst) == len(output_sum_lst)
                     for src, output_sum, gold_sum, tok_output_sum, tok_gold_sum in zip(src_lst, output_sum_lst, gold_sum_lst, tokenized_output_sum_lst, tokenized_gold_sum_lst):
                         tok_output_sum = tok_output_sum.replace('##', '')
                         tok_gold_sum = tok_gold_sum.replace('##', '')
