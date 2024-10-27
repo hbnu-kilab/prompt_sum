@@ -294,6 +294,9 @@ def save_sum_result(ret_obj, output_sum_lst, sum_type, pipeline_method,
     save_dir = Path(f'./{save_path/data_type}') / f'{data_phase}' / sum_type / pipeline_method
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
+    else:
+        for f_name in os.scandir(save_dir):
+            os.remove(f_name.path)
 
     if sum_type == "total_summary":
         asum_type = "total_asummary"
@@ -481,7 +484,7 @@ def main():
                         if args.pipeline_method not in ['only_gen']:
                             print(f"Input text: {src}")
                         print(f"Output summary: {output_sum}")
-                        print(f"Gold Output summary: {gold_sum}\n\n\n")
+                        print(f"Gold Output summary: {gold_sum}\n")
 
                     print("JSON SCORE:")
                     avg_rouge(scores_dict_json, len(src_lst))
