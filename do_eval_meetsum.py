@@ -414,7 +414,7 @@ def main():
                     for ex_data_dir in multidyle_config.dataset:
                         if os.path.exists(ex_data_dir):
                             for f_name in os.scandir(ex_data_dir):
-                                if f_name.split('_')[-1] in ["test", "val"]:
+                                if "_val" in f_name.path or "_test" in f_name.path :
                                     os.remove(f_name.path)
 
                     if sum_type == "total_summary":
