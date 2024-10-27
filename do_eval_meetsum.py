@@ -325,6 +325,7 @@ def calc_asum_score(args, metric):
             _, gold_json_lst  = load_data(gold_path)
 
             scores_dict_json = {}
+            inst_len = 0
             for sum_type in sum_types:
                 pred_path = Path(f'./{Path(args.save_dir)/data_type}') / f'{data_phase}' / sum_type / args.pipeline_method
                 _, pred_json_lst  = load_data(pred_path)
@@ -336,6 +337,7 @@ def calc_asum_score(args, metric):
 
                 for pred_dict, gold_dict in tqdm(zip(pred_json_lst, gold_json_lst), total=len(gold_json_lst), desc="eval results"):
                     total_len += 1
+                    inst_len += 1
                     for pred_sums, gold_sums in zip(pred_dict[sum_type], gold_dict[sum_type]):
                         gold_tok = do_tokenization_sum(gold_sums[asum_type])
                         pred_tok = do_tokenization_sum(pred_sums[asum_type])
@@ -345,6 +347,10 @@ def calc_asum_score(args, metric):
                         print(score_dict)
                         print(f"Output summary: {pred_sums[asum_type]}")
                         print(f"Gold Output summary: {gold_sums[asum_type]}\n\n\n")
+
+            print("JSON SCORE:")
+            avg_rouge(scores_dict_json, inst_len)
+            print_rouge(scores_dict_json)
 
     print("ALL Abstractive Summary Score:")
     avg_rouge(scores_dict, total_len)
