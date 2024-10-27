@@ -327,7 +327,7 @@ def calc_asum_score(args, metric):
                     asum_type = "topic_asummary"
 
                 for pred_dict, gold_dict in tqdm(zip(pred_json_lst, gold_json_lst), total=len(gold_json_lst), desc="eval results"):
-                    total_lan += 1
+                    total_len += 1
                     for pred_sums, gold_sums in zip(pred_dict[sum_type], gold_dict[sum_type]):
                         _ = gather_rouge(pred_sums[asum_type], gold_sums[asum_type], scores_dict, metric)
 
