@@ -499,9 +499,10 @@ def main():
     if args.pipeline_method not in ['only_gen']:
         ex_eval(all_aug_ids_lst, all_gold_ids_lst)
                         
+    avg_rouge(scores_dict, total_len)
+    print_rouge(scores_dict)
+
     calc_asum_score(args, metric)
-    # avg_rouge(scores_dict, total_len)
-    # print_rouge(scores_dict)
 
 if __name__ == "__main__":
     main()
