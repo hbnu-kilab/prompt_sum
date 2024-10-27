@@ -288,15 +288,8 @@ def do_abs_sum(src_lst, topic_lst, summary_sample, sum_range, inst_maker, prompt
     return output_sum_lst, tokenized_output_sum_lst
 
 
-def save_sum_result(ret_obj, output_sum_lst, sum_type, pipeline_method, 
-                    save_path, data_type, data_phase, data_path):
+def save_sum_result(ret_obj, output_sum_lst, sum_type, save_dir, data_path):
     title, file_ext = os.path.splitext(data_path.split('/')[-1])
-    save_dir = Path(f'./{save_path/data_type}') / f'{data_phase}' / sum_type / pipeline_method
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-    else:
-        for f_name in os.scandir(save_dir):
-            os.remove(f_name.path)
 
     if sum_type == "total_summary":
         asum_type = "total_asummary"
@@ -325,13 +318,14 @@ def calc_asum_score(args, metric):
     for data_type in args.data_types:
         for data_phase in args.data_phases:
             gold_path = Path(args.root_dir) / args.data_dir / data_type / data_phase
-            _, gold_json_lst  = load_data(gold_path)
+            gold_dir_list, gold_json_lst  = load_data(gold_path)
 
             scores_dict_json = {}
             inst_len = 0
             for sum_type in sum_types:
                 pred_path = Path(f'./{Path(args.save_dir)/data_type}') / f'{data_phase}' / sum_type / args.pipeline_method
-                _, pred_json_lst  = load_data(pred_path)
+                pred_dir_list, pred_json_lst  = load_data(pred_path)
+                pred_json_lst = 
 
                 if sum_type == "total_summary":
                     asum_type = "total_asummary"
@@ -388,6 +382,7 @@ def main():
     summary_sample = "AI와 챗GPT와 같은 기술은 직업 변화와 교육 방향성에 영향을 미친다. 챗GPT의 발달로 일정한 패턴으로 움직이는 직군이나 부가가치가 높은 일이 먼저 대체될 것이다. 챗GPT에 대한 기대가 높지만 현재는 현실적인 한계로 인해 부정적인 시각도 많다. 인공지능도 경험과 데이터 축적으로 인간의 판단과 유사한 정확도를 갖출 수 있을 것이며 점차 인공지능에 대한 인식이 긍정적으로 변화할 것이다. 기술이 진화됨에 따라 그에 맞는 능력을 갖추고 윤리적인 부분들을 바탕으로 최대한 활용할 수 있는 방향으로 나아가야 한다."
 
     scores_dict = {}
+    all_aug_ids_lst, all_gold_ids_lst = [], []
     total_len = 0
     for data_type in args.data_types:
         for data_phase in args.data_phases:
@@ -421,14 +416,24 @@ def main():
 
                     multidyle_ex_ids = [sorted(inner_lst) for inner_lst in multidyle_ex_ids]
 
+
+                # Abstractive summary
                 if sum_type == "topic_summary":
                     use_cot = False
                 else: use_cot = True
 
-                i = 0
-                all_aug_ids_lst, all_gold_ids_lst = [], []
-                for j_i, json_obj in tqdm(enumerate(json_lst), total=len(json_lst), desc="json loop"):
 
+                # save_files
+                save_dir = Path(f'./{save_path/data_type}') / f'{data_phase}' / sum_type / args.pipeline_method
+                if not os.path.exists(save_dir):
+                    os.makedirs(save_dir)
+                else:
+                    for f_name in os.scandir(save_dir):
+                        os.remove(f_name.path)
+
+                # do abstractive summary
+                i = 0
+                for j_i, json_obj in tqdm(enumerate(json_lst), total=len(json_lst), desc="json loop"):
                     scores_dict_json = {}
                     ret_obj = deepcopy(json_obj)
 
@@ -464,7 +469,7 @@ def main():
                     output_sum_lst, tokenized_output_sum_lst = do_abs_sum(src_lst, topic_input_lst, summary_sample, sum_range, inst_maker, promptor)
                     total_len += len(src_lst)
 
-                    save_sum_result(ret_obj, output_sum_lst, sum_type, args.pipeline_method, save_path, data_type, data_phase, data_dir_list[j_i])
+                    save_sum_result(ret_obj, output_sum_lst, sum_type, save_dir, data_dir_list[j_i])
                     
                     # scoring
                     if args.pipeline_method not in ['only_gen']:
