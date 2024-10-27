@@ -429,7 +429,7 @@ def main():
                         multidyle_config.data_type = f"{multidyle_data_type}-onlytopic"
                     elif len(sum_types) > 1 and "topic_summary" in sum_types and "total_summary" in sum_types:
                         multidyle_config.data_type = f"{multidyle_data_type}-no_speaker"
-                    multidyle_ex_ids = multidyle_test(multidyle_config)
+                    multidyle_ex_ids = multidyle_test(multidyle_config, file_names=data_dir_list)
 
                     multidyle_ex_ids = [sorted(inner_lst) for inner_lst in multidyle_ex_ids]
                     all_multidyle_ex_ids_lst += multidyle_ex_ids
@@ -533,3 +533,4 @@ def main():
 if __name__ == "__main__":
     main()
     # python do_etri_aug.py -dt timbel datamaker-2023-all --model_type gpt-4o-mini
+    # python do_eval_meetsum.py -dt timbel -st total_summary -pm util_llm -dp test -d summarization/ko_reset
