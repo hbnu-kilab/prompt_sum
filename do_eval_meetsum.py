@@ -340,7 +340,7 @@ def calc_asum_score(args, metric):
                     topic_type = "topic"
 
                 for pred_dict, gold_dict in tqdm(zip(pred_json_lst, gold_json_lst), total=len(gold_json_lst), desc="eval results"):
-                    for pred_sums, gold_sums, topic in zip(pred_dict[sum_type], gold_dict[sum_type], gold_dict[topic_type]):
+                    for pred_sums, gold_sums in zip(pred_dict[sum_type], gold_dict[sum_type]):
                         total_len += 1
                         inst_len += 1
                         gold_tok = do_tokenization_sum(gold_sums[asum_type])
@@ -348,7 +348,7 @@ def calc_asum_score(args, metric):
                         score_dict = gather_rouge(pred_tok, gold_tok, scores_dict, metric)
                         _ = gather_rouge(pred_tok, gold_tok, scores_dict_json, metric)
 
-                        print(f"Topic: {topic}")
+                        print(f"Topic: {gold_sums[topic_type]}")
                         print(f"Output summary: {pred_sums[asum_type]}")
                         print(f"Gold Output summary: {gold_sums[asum_type]}\n\n\n")
                         print(score_dict)
@@ -513,7 +513,7 @@ def main():
                         # evaluation for extractive summary 
                         # if args.pipeline_method not in ['only_gen']:
                         #     print(f"Input text: {src}")
-                        print(f"Topic: {ori_topic}")
+                        print(f"\nTopic: {ori_topic}")
                         print(f"Output summary: {output_sum}")
                         print(f"Gold Output summary: {gold_sum}\n")
 
