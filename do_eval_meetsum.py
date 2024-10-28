@@ -518,7 +518,7 @@ def main():
                         print(f"Gold Output summary: {gold_sum}\n")
 
                         if args.pipeline_method not in ['only_gen']:
-                            ex_eval(aug_ids, gold_ids)
+                            ex_eval([aug_ids], [gold_ids])
                         print(score_dict)
                         print()
 
