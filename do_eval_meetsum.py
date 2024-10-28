@@ -348,10 +348,11 @@ def calc_asum_score(args, metric):
                         score_dict = gather_rouge(pred_tok, gold_tok, scores_dict, metric)
                         _ = gather_rouge(pred_tok, gold_tok, scores_dict_json, metric)
 
-                        print(f"Topic: {gold_sums[topic_type]}")
+                        print(f"\nTopic: {gold_sums[topic_type]}")
                         print(f"Output summary: {pred_sums[asum_type]}")
-                        print(f"Gold Output summary: {gold_sums[asum_type]}\n\n\n")
+                        print(f"Gold Output summary: {gold_sums[asum_type]}")
                         print(score_dict)
+                        print()
 
             print("JSON SCORE:")
             avg_rouge(scores_dict_json, inst_len)
