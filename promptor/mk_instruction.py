@@ -240,6 +240,8 @@ def mk_inst_exsum_meetsum(sent, topic, dial_len, num_ex_sent):
 
 # 3. 추출 요약으로 자동으로 출력한 [SUM_IDS]가 주어지며, [SUM_IDS]를 기반으로 summary에 도움이 되는 문장을 선별하시오.
 def mk_inst_exsum_w_exids(sent, topic, dial_len, num_ex_sent, ex_ids):
+    sent_lst = ['[' + sent_el for sent_el in sent.split('[')]
+    ex_ids = ' '.join([f'[{ex_id}] {sent_lst[ex_id-1]}' for ex_id in ex_ids])
     return f"""주어진 입력 문장을 아래 <order>에 따라 [Topic]과 관련된 문장을 선별해줘.
 <order>:
 1. 입력 문장은 [num] sentence 와 같이 연결된 회의 대화 내용입니다.
