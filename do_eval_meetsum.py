@@ -134,7 +134,7 @@ def gather_rouge(ref, pred, scores_dict, metric):
 
 
 def mk_topic(promptor, ori, use_cot, sum_type='total_summary'):
-    topic_input_lst = []
+    topic_input_lst, ori_topic_lst = [], []
     if sum_type == "total_summary":
         topic_type = "total_topic"
     elif sum_type == "topic_summary":
@@ -149,8 +149,9 @@ def mk_topic(promptor, ori, use_cot, sum_type='total_summary'):
             topic_input = topic
 
         topic_input_lst.append(topic_input)
+        ori_topic_lst.append(topic)
 
-    return topic_input_lst
+    return topic_input_lst, ori_topic_lst
 
 
 def get_gold_ex_sum(ori, sum_type='total_summary'):
@@ -333,11 +334,13 @@ def calc_asum_score(args, metric):
 
                 if sum_type == "total_summary":
                     asum_type = "total_asummary"
+                    topic_type = "total_topic"
                 elif sum_type == "topic_summary":
                     asum_type = "topic_asummary"
+                    topic_type = "topic"
 
                 for pred_dict, gold_dict in tqdm(zip(pred_json_lst, gold_json_lst), total=len(gold_json_lst), desc="eval results"):
-                    for pred_sums, gold_sums in zip(pred_dict[sum_type], gold_dict[sum_type]):
+                    for pred_sums, gold_sums, topic in zip(pred_dict[sum_type], gold_dict[sum_type], gold_dict[topic_type]):
                         total_len += 1
                         inst_len += 1
                         gold_tok = do_tokenization_sum(gold_sums[asum_type])
@@ -345,9 +348,10 @@ def calc_asum_score(args, metric):
                         score_dict = gather_rouge(pred_tok, gold_tok, scores_dict, metric)
                         _ = gather_rouge(pred_tok, gold_tok, scores_dict_json, metric)
 
-                        print(score_dict)
+                        print(f"Topic: {topic}")
                         print(f"Output summary: {pred_sums[asum_type]}")
                         print(f"Gold Output summary: {gold_sums[asum_type]}\n\n\n")
+                        print(score_dict)
 
             print("JSON SCORE:")
             avg_rouge(scores_dict_json, inst_len)
@@ -397,7 +401,7 @@ def main():
             for sum_type in sum_types:
                 if sum_type == "total_summary":
                     if data_type == "timbel":
-                        sum_range = "200~400"
+                        sum_range = "300~500"
                     elif data_type == "datamaker":
                         sum_range = "50~200"
                 elif sum_type == "topic_summary":
@@ -456,7 +460,7 @@ def main():
                     ret_obj = deepcopy(json_obj)
 
                     # get topic or make topic-CoT
-                    topic_input_lst = mk_topic(promptor, json_obj, use_cot, sum_type)
+                    topic_input_lst, ori_topic_lst = mk_topic(promptor, json_obj, use_cot, sum_type)
 
                     # get gold extractive and abstractive summary
                     gold_ids_lst = get_gold_ex_sum(json_obj, sum_type)
@@ -496,7 +500,10 @@ def main():
                     
                     # scoring
                     assert len(src_lst) == len(output_sum_lst)
-                    for src, output_sum, gold_sum, tok_output_sum, tok_gold_sum in zip(src_lst, output_sum_lst, gold_sum_lst, tokenized_output_sum_lst, tokenized_gold_sum_lst):
+                    for src, ori_topic, output_sum, gold_sum, \
+                        tok_output_sum, tok_gold_sum, aug_ids, gold_ids in zip(src_lst, ori_topic_lst, output_sum_lst, gold_sum_lst, \
+                        tokenized_output_sum_lst, tokenized_gold_sum_lst, \
+                            aug_ids_lst, gold_ids_lst):
                         tok_output_sum = tok_output_sum.replace('##', '')
                         tok_gold_sum = tok_gold_sum.replace('##', '')
                         score_dict = gather_rouge(tok_output_sum, tok_gold_sum, scores_dict, metric)
@@ -504,12 +511,16 @@ def main():
 
                         # print
                         # evaluation for extractive summary 
-                        print(score_dict)
-                        print()
-                        if args.pipeline_method not in ['only_gen']:
-                            print(f"Input text: {src}")
+                        # if args.pipeline_method not in ['only_gen']:
+                        #     print(f"Input text: {src}")
+                        print(f"Topic: {ori_topic}")
                         print(f"Output summary: {output_sum}")
                         print(f"Gold Output summary: {gold_sum}\n")
+
+                        if args.pipeline_method not in ['only_gen']:
+                            ex_eval(aug_ids, gold_ids)
+                        print(score_dict)
+                        print()
 
                     print("JSON SCORE:")
                     if args.pipeline_method not in ['only_gen']:
