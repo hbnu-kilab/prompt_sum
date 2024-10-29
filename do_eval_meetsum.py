@@ -11,6 +11,7 @@ from promptor.mk_instruction import mk_inst_exsum_meetsum, mk_inst_for_meeting_s
 import torch
 import argparse
 from transformers import AutoTokenizer
+from mecab import MeCab
 
 from eval.clean_text import postprocess_text, clean_data_ko
 
@@ -26,7 +27,7 @@ from multidyle.test_multi_dyle import test as multidyle_test
 from multidyle.config import Config 
 
 tokenizer = AutoTokenizer.from_pretrained("klue/roberta-base")
-
+mecab = MeCab()
 
 def load_data(data_dir):
     # SBSC data
@@ -308,6 +309,8 @@ def save_sum_result(ret_obj, output_sum_lst, sum_type, save_dir, data_path):
 def do_tokenization_sum(sum_text, tok_method="bpe"):
     if tok_method in ["bpe"]:
         tokenized_sum_text = ' '.join(tokenizer.tokenize(sum_text)).replace('##', '')
+    elif tok_method in ["morp"]:
+        tokenized_sum_text = mecab.morphs(sum_text)
 
     return tokenized_sum_text
 
@@ -377,6 +380,7 @@ def main():
     parser.add_argument("-pm", "--pipeline_method", default="only_llm", dest="pipeline_method", help="model_type: [only_llm: llm e-sum -> llm a-sum, only_encoder: roberta -> llm a-sum, util_llm: roberta -> llm e-sum -> llm a-sum, merge_exs: reberta + llm e-sum -> llm a-sum, only_gen: only a-sum]")
     args = parser.parse_args()
 
+    root_dir = args.root_dir
     data_dir = args.data_dir
     save_path = Path(args.save_dir)
     sum_types = args.summary_types
@@ -396,7 +400,7 @@ def main():
     total_len = 0
     for data_type in args.data_types:
         for data_phase in args.data_phases:
-            data_path = Path(args.root_dir) / args.data_dir / data_type / data_phase
+            data_path = Path(root_dir) / data_dir / data_type / data_phase
             data_dir_list, json_lst  = load_data(data_path)
 
             for sum_type in sum_types:
@@ -420,7 +424,7 @@ def main():
                         multidyle_config.eval_model_dir = '/kilab/models/summarization/multidyle/encoder/epochs_4--val_28.6667'
 
                     multidyle_config.test_type = multidyle_data_type
-                    multidyle_config.dataset = [f'/kilab/data/etri/{data_dir}/{multidyle_data_type}/']
+                    multidyle_config.dataset = [f'{root_dir}/{data_dir}/{multidyle_data_type}/']
                     
                     for ex_data_dir in multidyle_config.dataset:
                         if os.path.exists(ex_data_dir):
@@ -476,6 +480,7 @@ def main():
                         ex_ids_lst = []
                         for aug_ids in aug_ids_lst:
                             ex_ids_lst.append(list(set(multidyle_ex_ids[m_j] + aug_ids)))
+                            m_j += 1
                         # ex_ids_lst = [list(set(n1 + n2)) for n1, n2 in zip(multidyle_ex_ids[i], aug_ids_lst)]
                         # mk_inst_exsum_wo_noise(sent, ex_ids_lst)
                         aug_ids_lst = ex_ids_lst
