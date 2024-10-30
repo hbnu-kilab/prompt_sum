@@ -164,6 +164,7 @@ def get_gold_ex_sum(ori, sum_type='total_summary'):
         sentence_ids = 'topic_sentence_ids'
 
     gold_ids_lst = []
+    # id from data
     for total_summary in tqdm(ori[sum_type], total=len(ori[sum_type]), desc="get_gold_ex_sum"):
         gold_ids = total_summary[sentence_ids] if sentence_ids in total_summary else total_summary['speaker_sentence_ids']
         gold_ids_lst.append(gold_ids)
@@ -310,7 +311,7 @@ def do_tokenization_sum(sum_text, tok_method="bpe"):
     if tok_method in ["bpe"]:
         tokenized_sum_text = ' '.join(tokenizer.tokenize(sum_text)).replace('##', '')
     elif tok_method in ["morp"]:
-        tokenized_sum_text = mecab.morphs(sum_text)
+        tokenized_sum_text =  ' '.join(mecab.morphs(sum_text))
 
     return tokenized_sum_text
 
@@ -440,7 +441,8 @@ def main():
                         multidyle_config.data_type = f"{multidyle_data_type}-no_speaker"
                     multidyle_ex_ids = multidyle_test(multidyle_config, file_names=data_dir_list)
 
-                    multidyle_ex_ids = [sorted(inner_lst) for inner_lst in multidyle_ex_ids]
+                    # index to sent_id
+                    multidyle_ex_ids = [sorted([id_el+1 for id_el in inner_lst]) for inner_lst in multidyle_ex_ids]
                     all_multidyle_ex_ids_lst += multidyle_ex_ids
 
 
