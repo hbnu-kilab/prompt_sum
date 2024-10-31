@@ -279,7 +279,7 @@ def do_abs_sum(src_lst, topic_lst, summary_sample, sum_range, inst_maker, prompt
                 or "죄송하지만 주어진 텍스트를 기반으로" in output_sum or "미안해" in output_sum: 
             output_sum = promptor.do_llm(instruction)
             cnt += 1
-            if cnt > 3: break
+            if cnt > 10: break
 
         output_sum = output_sum.split("[요약]")[-1].replace('\n', ' ')
         output_sum = clean_data_ko(output_sum)
@@ -419,10 +419,10 @@ def main():
                     multidyle_data_type = data_type.split('-')[0]
                     if False:
                         multidyle_config.retriever_name_or_path = "klue/roberta-large"
-                        multidyle_config.eval_model_dir = '/kilab/models/summarization/multidyle/encoder/epochs_1--val_26.3946'
+                        multidyle_config.eval_model_dir = '/kilab/models/summarization/multidyle/encoder/epochs_9--val_24.4393'
                     else:
                         multidyle_config.retriever_name_or_path = "klue/roberta-small"
-                        multidyle_config.eval_model_dir = '/kilab/models/summarization/multidyle/encoder/epochs_4--val_28.6667'
+                        multidyle_config.eval_model_dir = '/kilab/models/summarization/multidyle/encoder/epochs_1--val_29.5694'
 
                     multidyle_config.test_type = multidyle_data_type
                     multidyle_config.dataset = [f'{root_dir}/{data_dir}/{multidyle_data_type}/']
