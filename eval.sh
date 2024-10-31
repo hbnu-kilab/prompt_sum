@@ -1,0 +1,1 @@
+python do_only_eval.py -s result/etri_eval/ -dt timbel -pm util_llm -st total_summary -d summarization/ko_reset -dp train test val
